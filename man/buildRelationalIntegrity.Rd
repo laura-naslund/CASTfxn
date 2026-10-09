@@ -4,7 +4,7 @@
 \alias{buildRelationalIntegrity}
 \title{Build relational integrity table}
 \usage{
-buildRelationalIntegrity(FileOne, FileTwo, JoinCol)
+buildRelationalIntegrity(FileOne, FileTwo, JoinCol, obj.list)
 }
 \description{
 Build relational integrity table

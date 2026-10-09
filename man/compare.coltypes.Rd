@@ -4,7 +4,7 @@
 \alias{compare.coltypes}
 \title{Compare column types}
 \usage{
-compare.coltypes(object, required.cols)
+compare.coltypes(object, df.obj)
 }
 \description{
 Compare column types

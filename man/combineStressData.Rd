@@ -5,11 +5,11 @@
 \title{Combine stressor data}
 \usage{
 combineStressData(
-  boo_meas = NULL,
-  boo_model = NULL,
+  boo_ts = NULL,
+  boo_und = NULL,
   boo_outliers = NULL,
-  meas_stress,
-  mod_stress
+  ts_stress,
+  und_stress
 )
 }
 \description{

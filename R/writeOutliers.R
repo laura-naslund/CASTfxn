@@ -65,21 +65,18 @@ writeOutliers <- function(TargetSiteID,
     compSites <- compSites
     allSites <- allSites
   } else{
-    TargetSiteCluster <- df_Sites %>%
-      dplyr::filter(StationID == TargetSiteID) %>%
+    TargetSiteCluster <- df_Sites |>
+      dplyr::filter(StationID == TargetSiteID) |>
       dplyr::pull(IncaseCol)
 
-    compSites <- df_Sites %>%
-      dplyr::filter(IncaseCol == TargetSiteCluster) %>%
+    compSites <- df_Sites |>
+      dplyr::filter(IncaseCol == TargetSiteCluster) |>
       dplyr::pull(StationID)
 
-    allSites <- df_Sites %>%
-      dplyr::filter(is.na(IncaseCol) | IncaseCol != TargetSiteCluster) %>%
+    allSites <- df_Sites |>
+      dplyr::filter(is.na(IncaseCol) | IncaseCol != TargetSiteCluster) |>
       dplyr::pull(StationID)
   }
-
-  # define pipe
-  `%>%` <- dplyr::`%>%`
 
   # add case identifier to outliers dataframe and add stressor parameter label
   df_outliers <- df_outliers |>
@@ -138,21 +135,21 @@ writeOutliers <- function(TargetSiteID,
   # data_OutliersLabeled <- merge(df_outliers,
   #                               df_stressInfo[, c("StdParamName", "Label")],
   #                               by = "StdParamName", all.x =  TRUE)
-  # siteOutliers <- data_OutliersLabeled %>%
-  #   dplyr::filter(StationID == TargetSiteID) %>%
-  #   dplyr::filter(!is.na(TransfResult)) %>%
+  # siteOutliers <- data_OutliersLabeled |>
+  #   dplyr::filter(StationID == TargetSiteID) |>
+  #   dplyr::filter(!is.na(TransfResult)) |>
   #   dplyr::filter(Outlier == "Outlier")
-  # compOutliers <- data_OutliersLabeled %>%
-  #   dplyr::filter(StationID %in% compSites) %>%
-  #   dplyr::filter(StationID != TargetSiteID) %>%
-  #   dplyr::filter(StdParamName %in% siteDetectsAll) %>%
-  #   dplyr::filter(!is.na(TransfResult)) %>%
+  # compOutliers <- data_OutliersLabeled |>
+  #   dplyr::filter(StationID %in% compSites) |>
+  #   dplyr::filter(StationID != TargetSiteID) |>
+  #   dplyr::filter(StdParamName %in% siteDetectsAll) |>
+  #   dplyr::filter(!is.na(TransfResult)) |>
   #   dplyr::filter(Outlier == "Outlier")
-  # allOutliers <- data_OutliersLabeled %>%
-  #   dplyr::filter(StationID %in% allSites) %>%
-  #   dplyr::filter(StationID != TargetSiteID) %>%
-  #   dplyr::filter(StdParamName %in% siteDetectsAll) %>%
-  #   dplyr::filter(!is.na(TransfResult)) %>%
+  # allOutliers <- data_OutliersLabeled |>
+  #   dplyr::filter(StationID %in% allSites) |>
+  #   dplyr::filter(StationID != TargetSiteID) |>
+  #   dplyr::filter(StdParamName %in% siteDetectsAll) |>
+  #   dplyr::filter(!is.na(TransfResult)) |>
   #   dplyr::filter(Outlier == "Outlier")
 
   # if (nrow(siteOutliers) > 0) {

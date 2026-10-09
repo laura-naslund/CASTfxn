@@ -6,46 +6,46 @@
 #' @examples
 
 combineStressData <- function(#meta = NULL,
-                              boo_meas = NULL,
-                              boo_model = NULL,
+                              boo_ts = NULL,
+                              boo_und = NULL,
                               boo_outliers = NULL,
-                              meas_stress,
-                              mod_stress){
+                              ts_stress,
+                              und_stress){
 
   # if(is.null(meta)==FALSE){
-  #   boo_meas <- meta$boo_meas
-  #   boo_model <- meta$boo_model
+  #   boo_ts <- meta$boo_ts
+  #   boo_und <- meta$boo_und
   #   boo_outliers <- meta$removeOutliers
   # }
 
-  if (isTRUE(boo_meas) && isTRUE(boo_model)) {
+  if (isTRUE(boo_ts) && isTRUE(boo_und)) {
     # Combine metadata
-    data_stressInfo <- rbind(meas_stress[["data_chemInfo"]], mod_stress[["data_modelInfo"]])
+    data_stressInfo <- rbind(ts_stress[["data_tsInfo"]], und_stress[["data_undInfo"]])
 
     # Combine data
-    data_stress     <- rbind(meas_stress[["data_chemRaw"]], mod_stress[["data_modelRaw"]])
+    data_stress     <- rbind(ts_stress[["data_tsRaw"]], und_stress[["data_undRaw"]])
 
     # Combine outliers
     if (isTRUE(boo_outliers)) {
-      data_stressOutliers <- rbind(meas_stress[["data_measoutliers"]], mod_stress[["data_modeloutliers"]])
+      data_stressOutliers <- rbind(ts_stress[["data_tsoutliers"]], und_stress[["data_undoutliers"]])
     }
 
-  } else if (isTRUE(boo_meas)) {
-    data_stressInfo <- meas_stress[["data_chemInfo"]]
-    data_stress     <- meas_stress[["data_chemRaw"]]
+  } else if (isTRUE(boo_ts)) {
+    data_stressInfo <- ts_stress[["data_tsInfo"]]
+    data_stress     <- ts_stress[["data_tsRaw"]]
 
     if (isTRUE(boo_outliers)) {
-      data_stressOutliers <- meas_stress[["data_measoutliers"]]
+      data_stressOutliers <- ts_stress[["data_tsoutliers"]]
     } else {
       data_stressOutliers <- NULL
     }
 
   } else {
-    data_stressInfo <- mod_stress[["data_modelInfo"]]
-    data_stress     <- mod_stress[["data_modelRaw"]]
+    data_stressInfo <- und_stress[["data_undInfo"]]
+    data_stress     <- und_stress[["data_undRaw"]]
 
     if (isTRUE(boo_outliers)) {
-      data_stressOutliers <- mod_stress[["data_modeloutliers"]]
+      data_stressOutliers <- und_stress[["data_undoutliers"]]
     } else {
       data_stressOutliers <- NULL
     }

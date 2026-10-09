@@ -100,37 +100,37 @@ list.SiteData <- prepSiteData(outcaseLabel = meta$outcaseLabel,
 # 05, Timestamped data and metadata ####
 prog_cnt <- stepProgress(cfg, "Load timestamped stressor data", prog_cnt, prog_n, prog_sleep)
 
-if (isTRUE(meta$boo_meas)) {
-  list.measStress   <- prepMeasStressorData(fn_data = "data_chemAll.rds",
-                                            fn_meta = "data_chemInfo.rds",
+if (isTRUE(meta$boo_ts)) {
+  list.tsStress   <- prepTsStressorData(fn_data = "data_ts.rds",
+                                            fn_meta = "data_tsInfo.rds",
                                             sub_dir = "_Histograms",
                                             removeOutliers = meta$removeOutliers,
                                             config = cfg)
-} else {list.measStress <- NULL}
+} else {list.tsStress <- NULL}
 
 #~~~~~~~~~~~~~~~~~~~~~~~
-# 06, Modeled data and metadata ####
-prog_cnt <- stepProgress(cfg, "Load modeled stressor data", prog_cnt, prog_n, prog_sleep)
+# 06, Undated data and metadata ####
+prog_cnt <- stepProgress(cfg, "Load undated stressor data", prog_cnt, prog_n, prog_sleep)
 
-if (isTRUE(meta$boo_model)) {
-  list.modStress     <- prepModStressorData(fn_data = "data_modelAll.rds",
-                                            fn_meta = "data_modelInfo.rds",
+if (isTRUE(meta$boo_und)) {
+  list.undStress     <- prepUndStressorData(fn_data = "data_und.rds",
+                                            fn_meta = "data_undInfo.rds",
                                             sub_dir = "_Histograms",
                                             removeOutliers = meta$removeOutliers,
                                             config = cfg)
-} else {list.modStress <- NULL}
+} else {list.undStress <- NULL}
 
 #~~~~~~~~~~~~~~~~~~~~~~~
 # 07, Combine stressor data ####
 prog_cnt <- stepProgress(cfg, "Combine stressor data and metadata", prog_cnt, prog_n, prog_sleep)
 
-list.Stress <- combineStressData(meas_stress = list.measStress,
-                                 mod_stress = list.modStress,
-                                 boo_meas = meta$boo_meas,
-                                 boo_model = meta$boo_model,
+list.Stress <- combineStressData(ts_stress = list.tsStress,
+                                 und_stress = list.undStress,
+                                 boo_ts = meta$boo_ts,
+                                 boo_und = meta$boo_und,
                                  boo_outliers = meta$removeOutliers)
 
-rm(list.measStress, list.modStress)
+rm(list.tsStress, list.undStress)
 
 #~~~~~~~~~~~~~~~~~~~~~~~
 # 08, Get WS stressor data ####
@@ -736,7 +736,7 @@ for (site in seq_len(nrow(df_targets))) {
     } else {
 
       temp <- writeSSIGap(TargetSiteID)
-      gaps <- gaps |>dplyr::bind_rows(gap.statement)
+      gaps <- gaps |>dplyr::bind_rows(temp)
       rm(temp)
     }
 

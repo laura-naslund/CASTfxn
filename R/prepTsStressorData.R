@@ -4,9 +4,9 @@
 #
 #  R version 4.4.3
 #
-#' @title prepSiteData
+#' Prepare timestamped stressor data
 #'
-#' @description Prepare measured stressor data for CASTool
+#' @description Prepare timestamped stressor data for CASTool
 #'
 #' @details Reviews each uploaded file against both user-input data (either via the shiny app or contained in the CASToolMetadata.xlsx file) to evaluate 1) if the file exists, 2) if it contains the required columns (which requires that they be named correctly), 3) whether datatypes meet requirements.
 #'
@@ -29,7 +29,7 @@
 #' @examples
 #' # None at this time
 #' @export
-prepMeasStressorData <- function(config = NULL,
+prepTsStressorData <- function(config = NULL,
                                  # meta = NULL,
                                  in_dir = NULL,
                                  out_dir = NULL,
@@ -74,47 +74,47 @@ prepMeasStressorData <- function(config = NULL,
 
 
   # Load RDS files
-  data_chemInfo   <- readRDS(file.path(in_dir, fn_meta))
-  data_chemAll    <- readRDS(file.path(in_dir, fn_data))
+  data_tsInfo   <- readRDS(file.path(in_dir, fn_meta))
+  data_tsAll    <- readRDS(file.path(in_dir, fn_data))
 
-  ## Get metadata for all measured stressors
-  data_chemInfo   <- data_chemInfo |>
+  ## Get metadata for all tsured stressors
+  data_tsInfo   <- data_tsInfo |>
     dplyr::filter(UseInStressorID == 1)
 
-  ## Get measured stressor values to use in the stressor id
-  params2use      <- as.character(data_chemInfo$StdParamName)
-  data_chemAll    <- dplyr::filter(data_chemAll, StdParamName %in% params2use)
+  ## Get tsured stressor values to use in the stressor id
+  params2use      <- as.character(data_tsInfo$StdParamName)
+  data_tsAll    <- dplyr::filter(data_tsAll, StdParamName %in% params2use)
 
   ## getOutliers ----
-  ## returns a dataframe with ChemSampleID, StdParamName, TransfResult,
+  ## returns a dataframe with SampleID, StdParamName, TransfResult,
   ## IQRmethod, SDmethod, Outlier
-  data_measOutliers <- getOutliers(df_data   = data_chemAll,
-                                   df_meta   = data_chemInfo,
+  data_tsOutliers <- getOutliers(df_data   = data_tsAll,
+                                   df_meta   = data_tsInfo,
                                    dir_plots = out_dir)
   ## Merge outlier flags with raw data by sample ID
-  data_chemAll <- merge(data_chemAll, data_measOutliers,
+  data_tsAll <- merge(data_tsAll, data_tsOutliers,
                         by.x = c("StationID", "StressSampleID", "StressSampleDate",
                                  "StdParamName", "ResultValue"),
                         by.y = c("StationID", "StressSampleID", "StressSampleDate",
                                  "StdParamName", "ResultValue"),
                         all.x = TRUE)
-  data_chemAll <- data_chemAll |>
+  data_tsAll <- data_tsAll |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, StdParamName,
                   TransfResult, IQRmethod, SDmethod, Outlier)
   # Clean up
-  rm(data_measOutliers, params2use)
+  rm(data_tsOutliers, params2use)
 
   ## Average duplicate data -- remove outliers first, if desired
   if (!is.na(removeOutliers) & removeOutliers == TRUE) {
-    data_measoutliers <- data_chemAll |>
+    data_tsoutliers <- data_tsAll |>
       dplyr::filter(Outlier == "Outlier")
-    data_chemAll <- data_chemAll |>
+    data_tsAll <- data_tsAll |>
       dplyr::filter(Outlier %in% c("Good", "NE"))
   } else {
-    data_measoutliers <- NULL
+    data_tsoutliers <- NULL
   }
 
-  data_chemAll <- data_chemAll |>
+  data_tsAll <- data_tsAll |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, StdParamName,
                   TransfResult) |>
     dplyr::mutate(StressSampleDate = lubridate::parse_date_time(StressSampleDate,
@@ -126,55 +126,55 @@ prepMeasStressorData <- function(config = NULL,
     dplyr::group_by(StationID, StressSampleID, StressSampleDate, StdParamName) |>
     dplyr::mutate(TransfResult = mean(TransfResult, na.rm = TRUE)) |>
     dplyr::filter(!is.na(TransfResult))
-  data_chemAll_dups <- data_chemAll[duplicated(data_chemAll),]
-  data_chemAll <- unique(data_chemAll) # should be unique, long-form sample/analyte
+  data_tsAll_dups <- data_tsAll[duplicated(data_tsAll),]
+  data_tsAll <- unique(data_tsAll) # should be unique, long-form sample/analyte
 
   # Duplicate all pH values, one to use for high pH as a stressor and one for low pH as a stressor
-  data_pHHigh <- data_chemAll |>
+  data_pHHigh <- data_tsAll |>
     dplyr::filter(stringr::str_detect(tolower(StdParamName), "^ph$") == TRUE) |>
     dplyr::mutate(StdParamName = "pH_high")
-  data_chemAll <- data_chemAll |>
+  data_tsAll <- data_tsAll |>
     dplyr::mutate(StdParamName = ifelse(stringr::str_detect(tolower(StdParamName), "^ph$") == TRUE, "pH_low",
                                         StdParamName))
-  data_chemRaw <- rbind(data_chemAll, data_pHHigh)
+  data_tsRaw <- rbind(data_tsAll, data_pHHigh)
   rm(data_pHHigh)
 
   # Replace metadata pH with pH_low and pH_high
-  pH_meta <- data_chemInfo |>
+  pH_meta <- data_tsInfo |>
     dplyr::filter(stringr::str_detect(tolower(StdParamName), "^ph$"))
 
   if(nrow(pH_meta)>0){
     pH_metaHigh <- pH_meta |> dplyr::mutate(StdParamName = "pH_high", Label = "pH (high)", DirIncStress = "Inc")
     pH_metaLow <- pH_meta |> dplyr::mutate(StdParamName = "pH_low", Label = "pH (low)", DirIncStress = "Dec")
 
-    data_chemInfo <- data_chemInfo |>
+    data_tsInfo <- data_tsInfo |>
       dplyr::filter(stringr::str_detect(tolower(StdParamName), "^ph$") == FALSE) |>
       dplyr::bind_rows(pH_metaHigh) |>
       dplyr::bind_rows(pH_metaLow)
   }
 
   # Adjust dates for samples collected on multiple dates with the same ID
-  analytes <- unique(as.character(data_chemRaw$StdParamName))
-  data_chemRaw <- as.data.frame(data_chemRaw) |>
+  analytes <- unique(as.character(data_tsRaw$StdParamName))
+  data_tsRaw <- as.data.frame(data_tsRaw) |>
     dplyr::filter(!is.na(TransfResult)) |>
     dplyr::select(StationID, StressSampleID, StressSampleDate,
                   StdParamName, TransfResult) |>
     tidyr::pivot_wider(names_from = StdParamName,
                        values_from = TransfResult)
-  data_chemRaw <- data_chemRaw |>
+  data_tsRaw <- data_tsRaw |>
     dplyr::group_by(StationID, StressSampleID) |>
     dplyr::mutate(StressSampleDate = min(StressSampleDate)) |>
     dplyr::ungroup()
-  data_chemRaw <- data_chemRaw |>
+  data_tsRaw <- data_tsRaw |>
     tidyr::pivot_longer(cols = dplyr::all_of(analytes),
                         names_to = "StdParamName",
                         values_to = "TransfResult")
-  data_chemRaw <- dplyr::filter(data_chemRaw, !is.na(TransfResult))
+  data_tsRaw <- dplyr::filter(data_tsRaw, !is.na(TransfResult))
 
-  myChemData <- list(data_chemInfo = data_chemInfo,
-                     data_chemRaw = data_chemRaw,
-                     data_measoutliers = data_measoutliers)
+  mytsData <- list(data_tsInfo = data_tsInfo,
+                     data_tsRaw = data_tsRaw,
+                     data_tsoutliers = data_tsoutliers)
 
-  return(myChemData)
+  return(mytsData)
 
 }

@@ -66,17 +66,17 @@ getMetadataParams <- function(out_dir = NULL,
   data_loaded <- readRDS(file.path(out_dir, dn_checked_sk, "loaded.rds"))
   out$loaded <- as.character(data_loaded$Object)
 
-  ## Describe whether measured and/or modeled data loaded
-  if(stringr::str_detect(out$loaded, "chem") |> any()){
-    out$boo_meas <- TRUE
+  ## Describe whether timestamped or undated data loaded
+  if(stringr::str_detect(out$loaded, "tsInfo") |> any()){
+    out$boo_ts <- TRUE
   } else{
-    out$boo_meas <- FALSE
+    out$boo_ts <- FALSE
   }
 
-  if(stringr::str_detect(out$loaded, "model") |> any()){
-    out$boo_model <- TRUE
+  if(stringr::str_detect(out$loaded, "undInfo") |> any()){
+    out$boo_und <- TRUE
   } else{
-    out$boo_model <- FALSE
+    out$boo_und <- FALSE
   }
 
   return(out)

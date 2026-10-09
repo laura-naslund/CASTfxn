@@ -4,9 +4,7 @@
 #
 #  R version 4.4.3
 #
-#' @title prepSiteData
-#'
-#' @description Prepare measured stressor data for CASTool
+#' @description Prepare undated stressor data for CASTool
 #'
 #' @details Reviews each uploaded file against both user-input data (either via the shiny app or contained in the CASToolMetadata.xlsx file) to evaluate 1) if the file exists, 2) if it contains the required columns (which requires that they be named correctly), 3) whether datatypes meet requirements.
 #'
@@ -27,7 +25,7 @@
 #' @return A list containing data_Sites and data_cluster to be used in the CASTool.
 #'
 #' @export
-prepModStressorData <- function(in_dir,
+prepUndStressorData <- function(in_dir,
                                 out_dir,
                                 fn_data,
                                 fn_meta,
@@ -37,7 +35,7 @@ prepModStressorData <- function(in_dir,
   # Global Bindings
   UseInStressorID <- StdParamName <- data_measOutliers <- StationID <-
     StressSampleID <- StressSampleDate <- TransfResult <- IQRmethod <-
-    SDmethod <- Outlier <- data_model_all <- NULL
+    SDmethod <- Outlier <- data_und_all <- NULL
 
   # Debug
   boo.debug = TRUE
@@ -70,46 +68,46 @@ prepModStressorData <- function(in_dir,
   out_dir <- dir.path
 
   # Load RDS files
-  data_modelInfo <- readRDS(file.path(in_dir, fn_meta))
-  data_modelAll  <- readRDS(file.path(in_dir, fn_data))
+  data_undInfo <- readRDS(file.path(in_dir, fn_meta))
+  data_undAll  <- readRDS(file.path(in_dir, fn_data))
 
   ## Get metadata for all measured stressors
-  data_modelInfo   <- data_modelInfo  |>
+  data_undInfo   <- data_undInfo  |>
     dplyr::filter(UseInStressorID == 1)
 
   ## Get measured stressor values to use in the stressor id
-  params2use    <- as.character(data_modelInfo$StdParamName)
-  data_modelAll <- dplyr::filter(data_modelAll, StdParamName %in% params2use)
+  params2use    <- as.character(data_undInfo$StdParamName)
+  data_undAll <- dplyr::filter(data_undAll, StdParamName %in% params2use)
 
-  ## getOutliers returns a dataframe with modelSampleID, StdParamName, TransfResult,
+  ## getOutliers returns a dataframe with undSampleID, StdParamName, TransfResult,
   ## IQRmethod, SDmethod, Outlier
-  data_modelOutliers <- getOutliers(df_data   = data_modelAll,
-                                    df_meta   = data_modelInfo,
+  data_undOutliers <- getOutliers(df_data   = data_undAll,
+                                    df_meta   = data_undInfo,
                                     dir_plots = out_dir)
   ## Merge outlier flags with raw data by sample ID
-  data_modelAll <- merge(data_modelAll, data_measOutliers,
+  data_undAll <- merge(data_undAll, data_measOutliers,
                         by.x = c("StationID", "StressSampleID", "StressSampleDate",
                                  "StdParamName", "ResultValue"),
                         by.y = c("StationID", "StressSampleID", "StressSampleDate",
                                  "StdParamName", "ResultValue"),
                         all.x = TRUE)
-  data_modelAll <- data_modelAll  |>
+  data_undAll <- data_undAll  |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, StdParamName,
                   TransfResult, IQRmethod, SDmethod, Outlier)
   # Clean up
-  rm(data_modelOutliers, params2use)
+  rm(data_undOutliers, params2use)
 
   ## Average duplicate data -- remove outliers first, if desired
   if (removeOutliers) {
-    data_modeloutliers <- data_modelAll  |>
+    data_undoutliers <- data_undAll  |>
       dplyr::filter(Outlier == "Outlier")
-    data_modelAll <- data_modelAll  |>
+    data_undAll <- data_undAll  |>
       dplyr::filter(Outlier %in% c("Good", "NE"))
   } else {
-    data_modeloutliers <- NULL
+    data_undoutliers <- NULL
   }
 
-  data_modelAll <- data_modelAll  |>
+  data_undAll <- data_undAll  |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, StdParamName,
                   TransfResult)  |>
     # dplyr::mutate(StressSampleID = stringr::str_replace_all(StressSampleID, "[:punct:]", "_"),
@@ -117,15 +115,15 @@ prepModStressorData <- function(in_dir,
     dplyr::group_by(StationID, StressSampleID, StressSampleDate, StdParamName)  |>
     dplyr::mutate(TransfResult = mean(TransfResult, na.rm = TRUE))  |>
     dplyr::filter(!is.na(TransfResult))
-  data_model_all_dups <- data_model_all[duplicated(data_modelAll),]
-  data_modelAll <- unique(data_modelAll) # should be unique, long-form sample/analyte
+  data_und_all_dups <- data_und_all[duplicated(data_undAll),]
+  data_undAll <- unique(data_undAll) # should be unique, long-form sample/analyte
 
-  mymodelData <- list(data_modelInfo    = data_modelInfo,
-                     data_modelRaw      = data_modelAll |>
+  myundData <- list(data_undInfo    = data_undInfo,
+                     data_undRaw      = data_undAll |>
                        dplyr::mutate(StressSampleDate = NA) |>
                        dplyr::select(StationID, StressSampleID, StressSampleDate, TransfValue),
-                     data_modeloutliers = data_modeloutliers)
+                     data_undoutliers = data_undoutliers)
 
-  return(mymodelData)
+  return(myundData)
 
 }
