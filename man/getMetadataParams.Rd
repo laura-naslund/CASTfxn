@@ -6,6 +6,16 @@
 \usage{
 getMetadataParams(out_dir = NULL, dn_checked_sk = NULL, config = NULL)
 }
+\arguments{
+\item{out_dir}{path to results directory}
+
+\item{dn_checked_sk}{name of checked data directory}
+
+\item{config}{list containing the configuration parameters}
+}
+\value{
+list with metadata parameters
+}
 \description{
 Get metadata parameters
 }

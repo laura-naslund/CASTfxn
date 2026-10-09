@@ -72,7 +72,7 @@ if (cfg$boo_shiny == TRUE) {
   # list.Tables <- checkInputs(dir_uploaded = cfg$in_dir,
   #                            dir_out = cfg$out_dir)
 
-  list.Tables <- checkInputs2(dir_uploaded = cfg$in_dir,
+  list.Tables <- checkInputs(dir_uploaded = cfg$in_dir,
                              dir_out = cfg$out_dir)
 
   write.csv(list.Tables$TableOne, file.path(cfg$out_dir, cfg$region, "TableOne.csv"), row.names = FALSE)

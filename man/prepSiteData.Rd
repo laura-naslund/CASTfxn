@@ -16,13 +16,15 @@ prepSiteData(
 \arguments{
 \item{out_dir}{directory where all rds files are stored}
 
-\item{outcaseLabel}{x}
+\item{config}{list containing the configuration parameters}
 
-\item{incaseColName}{x}
+\item{outcaseLabel}{label for sites outside of the case (used for figure labels)}
 
-\item{useBC}{x}
+\item{incaseColName}{name of column in the sites file containing the inside-the-case identifier}
 
-\item{outcaseColName}{x}
+\item{useBC}{boolean to use the Bray-curtis dissimilarity method for assigning comparator sites (current deprecated)}
+
+\item{outcaseColName}{name of column in the sites file containing the outside-the-case identifier}
 }
 \value{
 A list containing data_Sites and data_cluster to be used in the CASTool.

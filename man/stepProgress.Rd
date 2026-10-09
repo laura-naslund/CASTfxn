@@ -2,10 +2,24 @@
 % Please edit documentation in R/stepProgress.R
 \name{stepProgress}
 \alias{stepProgress}
-\title{Step progress}
+\title{Advance progress through the Shiny Run Report progress bar}
 \usage{
 stepProgress(config, msg, prog_cnt, prog_n, prog_sleep)
 }
+\arguments{
+\item{config}{list of configuration parameters}
+
+\item{msg}{message to display in the progress bar}
+
+\item{prog_cnt}{current step of progress bar}
+
+\item{prog_n}{total number of progress bar steps}
+
+\item{prog_sleep}{length of system sleep before advancing, intended to give users time to read progress}
+}
+\value{
+updated progress bar step count
+}
 \description{
-Step progress
+Advance progress through the Shiny Run Report progress bar
 }

@@ -2,10 +2,20 @@
 % Please edit documentation in R/setUpShiny.R
 \name{setUpShiny}
 \alias{setUpShiny}
-\title{Title}
+\title{Helper function to configure parameters for Shiny app run}
 \usage{
 setUpShiny(dir_data, dir_results, dn_checked_sk)
 }
+\arguments{
+\item{dir_data}{path to data input directory}
+
+\item{dir_results}{path to results directory}
+
+\item{dn_checked_sk}{name of checked data directory}
+}
+\value{
+list of configuration parameters when run in Shiny
+}
 \description{
-Title
+Helper function to configure parameters for Shiny app run
 }

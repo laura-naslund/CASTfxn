@@ -2,43 +2,15 @@
 % Please edit documentation in R/checkInputs.R
 \name{checkInputs}
 \alias{checkInputs}
-\title{checkInputs}
+\title{Check input files}
 \usage{
 checkInputs(
   dir_uploaded,
   dir_out,
-  fn.inputcheck = system.file("extdata", "CASTool_InputCheck.xlsx", package = "CASTfxn")
+  fn.inputcheck = system.file("extdata", "CASTool_InputCheck.xlsx", package = "CASTfxn"),
+  fn.matchups = system.file("extdata", "CASTool_MatchUps.xlsx", package = "CASTfxn")
 )
 }
-\arguments{
-\item{dir_uploaded}{directory of input files to be checked}
-
-\item{dir_out}{directory for output}
-
-\item{fn.inputcheck}{path filename for the MSExcel file describing required
-files, columns, types, and relationships.
-Default is extdata/CASTool_InputCheck.xlsx}
-}
-\value{
-A list of input check tables to be used in the CASTool.
-}
 \description{
-Check input files for existence, followed by checks for required
- columns, types, and relationships
-}
-\details{
-Reviews each uploaded file against both user-input data to evaluate 1)
-if the file exists, 2) if it contains the required columns (which requires
-that they be named correctly), 3) whether datatypes meet requirements.
-
-If any required files do not exist, return the list of missing files and shut
-down.  If all required files exist, proceed to internal checks of the columns
-and data. Lastly, perform minimal joins to determine missing values.
-
-dir_data and dir_results should be absolute and not relative paths.
-The function `normalizePath` can be used to convert from relative to absolute
-path.
-}
-\examples{
-# None at this time
+Check input files
 }

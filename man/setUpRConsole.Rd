@@ -13,6 +13,22 @@ setUpRConsole(
   load_local = TRUE
 )
 }
+\arguments{
+\item{in_dir}{path to data input directory}
+
+\item{out_dir}{path to results directory}
+
+\item{region}{name of analysis region}
+
+\item{useBC}{boolean to use biological filter}
+
+\item{install_missing}{boolean to install missing CASToolHelperPckg}
+
+\item{load_local}{boolean to load skeleton code (CASTfxn) locally}
+}
+\value{
+list of configuration parameters when run in R console
+}
 \description{
 Set up R console
 }

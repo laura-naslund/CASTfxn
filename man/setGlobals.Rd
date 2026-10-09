@@ -21,6 +21,38 @@ setGlobals(
   plot_W = 8
 )
 }
+\arguments{
+\item{boo_shiny}{boolean to run the code in the Shiny application}
+
+\item{boo_debug}{boolean to run the application in debug mode}
+
+\item{dn_checked_sk}{name of the checked inputs folder}
+
+\item{boo_plot}{boolean to generate plots}
+
+\item{pt_type}{vector of the types of points plotted (e.g., target site, inside the case degraded)}
+
+\item{pt_fill}{vector of point fill colors corresponding to pt_type}
+
+\item{pt_shape}{vector of point shapes corresponding to pt_type}
+
+\item{pt_size}{vector of point sizes corresponding to pt_type}
+
+\item{pt_alpha}{vector of point transparencies corresponding to pt_type}
+
+\item{refOutline_col}{hex code for the color of point outlines}
+
+\item{plot_dpi}{resolution of plots in dots per inch}
+
+\item{plot_units}{units corresponding to plot dimensions}
+
+\item{plot_H}{height of plots}
+
+\item{plot_W}{width of plots}
+}
+\value{
+list of configuration parameters
+}
 \description{
 Set global parameters
 }
