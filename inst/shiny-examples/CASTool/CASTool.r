@@ -24,7 +24,7 @@ tic <- Sys.time()
 # 01, Set up ####
 ## Define global variables ####
 cfg <- setGlobals(
-  boo_shiny = TRUE, # Whether to run the code in Shiny mode (set to FALSE if running script outside of the app)
+  boo_shiny = FALSE, # Whether to run the code in Shiny mode (set to FALSE if running script outside of the app)
   boo_debug = FALSE # Whether to run the code in debug mode
 )
 
@@ -33,12 +33,14 @@ if(cfg$boo_shiny == FALSE) {
 
   cfg <- setUpRConsole(
       # File path of data directory
-      in_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/14-biocriteria/Bioindicator_Workshop/CASTool Output",
+      in_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/8-nars-test-data/Data",
       # File path of results directory
-      out_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/14-biocriteria/Bioindicator_Workshop/CASTool Results",
+      out_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/8-nars-test-data/Results",
       region = "Rhode Island"
     ) |>
     append(cfg, values = _)
+
+  prog_cnt <- NULL
 }
 
 ## Shiny set up ####
@@ -67,7 +69,10 @@ if (cfg$boo_shiny == TRUE) {
 if (cfg$boo_shiny == TRUE) {
   prog_cnt <- stepProgress(cfg, "Check input data files", prog_cnt, prog_n, prog_sleep)
 } else {
-  list.Tables <- checkInputs(dir_uploaded = cfg$in_dir,
+  # list.Tables <- checkInputs(dir_uploaded = cfg$in_dir,
+  #                            dir_out = cfg$out_dir)
+
+  list.Tables <- checkInputs2(dir_uploaded = cfg$in_dir,
                              dir_out = cfg$out_dir)
 
   write.csv(list.Tables$TableOne, file.path(cfg$out_dir, cfg$region, "TableOne.csv"), row.names = FALSE)
@@ -92,8 +97,8 @@ list.SiteData <- prepSiteData(outcaseLabel = meta$outcaseLabel,
                               config = cfg)
 
 #~~~~~~~~~~~~~~~~~~~~~~~
-# 05, Measured data and metadata ####
-prog_cnt <- stepProgress(cfg, "Load measured stressor data", prog_cnt, prog_n, prog_sleep)
+# 05, Timestamped data and metadata ####
+prog_cnt <- stepProgress(cfg, "Load timestamped stressor data", prog_cnt, prog_n, prog_sleep)
 
 if (isTRUE(meta$boo_meas)) {
   list.measStress   <- prepMeasStressorData(fn_data = "data_chemAll.rds",
@@ -550,27 +555,12 @@ for (site in seq_len(nrow(df_targets))) {
 
       # If all stressors eliminated by co-occurrence, exit loop
     if (nrow(list.StressorMetaData$df_stressorMetadata) == 0) {
-      msg <- paste0("No candidate causes to evaluate further for ",
-                    TargetSiteID, " for the ", bioComm, " community.")
-      message(msg)
 
-      gapcomment <- paste0(bioComm, ": All candidate causes were eliminated by the co-occurrence line of evidence for ",
-                           TargetSiteID)
+      list.temp <- writeCoOccurElimGap(TargetSiteID, bioComm)
+      gaps <- gaps |> dplyr::bind_rows(list.temp$gap.statement)
+      status_df <- status_df |> dplyr::bind_rows(list.temp$temp_status)
 
-      gap.statement <- data.frame(
-        fxnname = "getCoOccur",
-        condition = msg,
-        result = as.character(0),
-        comment = gapcomment)
-
-      gaps <- gaps |>
-        dplyr::bind_rows(gap.statement)
-
-      temp_status <- data.frame(TargetSiteID = as.character(TargetSiteID),
-                                status = "Failed",
-                                reason = "No stressors remaining after removing stressors with no paired stressor-response samples at the target site,  stressors with insufficient number of samples at comparator sites, and co-occurrence screening. ")
-      status_df <- status_df |> dplyr::bind_rows(temp_status)
-
+      rm(list.temp)
       next
     }
 
@@ -698,19 +688,11 @@ for (site in seq_len(nrow(df_targets))) {
       rm(df_VPscores)
 
     } else {
-      msg <- "No site stressors have stressor-specific tolerance values"
-      message(msg)
-
-      gap.statement <- data.frame(
-        fxnname = "getVerifiedPredictions",
-        condition = TargetSiteID,
-        result = "0",
-        comment = msg
-      )
-
+      temp <- writeSSTVGap(TargetSiteID)
       gaps <- gaps |>
-        dplyr::bind_rows(gap.statement)
+        dplyr::bind_rows(temp)
 
+      rm(temp)
     }
 
     ### Stressor-specific indices ####
@@ -724,21 +706,10 @@ for (site in seq_len(nrow(df_targets))) {
         dplyr::filter(MetricName %in% unique(info.stress.ssi$SSIndex))
 
       if(nrow(info.ssi)==0){
-        msg <- paste0(paste(unique(info.stress.ssi$SSIndex), collapse = ", "),
-                      " are listed as stressor-specific index in stressor metadata but are not found as a metric to be included in ",
-                      bioComm,
-                      " response metadata.")
-        message(msg)
 
-        gap.statement <- data.frame(
-          fxnname = "getVPSSIscores",
-          condition = "Missing stressor-specific index information",
-          result = unique(info.stress.ssi$SSIndex),
-          comment = msg
-        )
-
-        gaps <- gaps |>
-          dplyr::bind_rows(gap.statement)
+        temp <- writeMissingSSIGap(index = unique(info.stress.ssi$SSIndex), bioComm)
+        gaps <- gaps |> dplyr::bind_rows(temp)
+        rm(temp)
 
       } else{
         list.VPSSIscores <- getVPSSI(TargetSiteID     = TargetSiteID,
@@ -756,27 +727,17 @@ for (site in seq_len(nrow(df_targets))) {
 
         df_VPSSIscores <- list.VPSSIscores$df.scores
 
-        if (nrow(df_VPSSIscores) != 0) { # LCN changed 20250917
+        if (nrow(df_VPSSIscores) != 0) {
           df_LoE <- rbind(df_LoE, df_VPSSIscores)
         }
         rm(df_VPSSIscores)
       }
 
-    } else { # no ssis
+    } else {
 
-      msg <- "No site stressors have stressor-specific indices"
-      message(msg)
-
-      gap.statement <- data.frame(
-        fxnname = "getVPSSIscores",
-        condition = TargetSiteID,
-        result = "0",
-        comment = msg
-      )
-
-      gaps <- gaps |>
-        dplyr::bind_rows(gap.statement)
-
+      temp <- writeSSIGap(TargetSiteID)
+      gaps <- gaps |>dplyr::bind_rows(gap.statement)
+      rm(temp)
     }
 
     msg <- paste0("getVerifiedPredictions for ", bioComm, " is complete.")
@@ -887,7 +848,7 @@ for (site in seq_len(nrow(df_targets))) {
               data_algMetrics = list.algData$data_bioMetrics,
               data_fishMetrics = list.fishData$data_bioMetrics,
               data_stressInfo = list.Stress$data_stressInfo,
-              siteDetectsAll = list.StressorElim$targMeasStress, # TODO see if this right
+              siteDetectsAll = list.StressorElim$targMeasStress,
               dn_checked_sk = cfg$dn_checked_sk
               )
 
@@ -927,7 +888,7 @@ for (site in seq_len(nrow(df_targets))) {
               dn_checked_sk = cfg$dn_checked_sk
               )
 
-  }## IF ~ cfg$boo_shiny
+  }
 
   gaps <- gaps |>
     dplyr::bind_rows(tryCatch(list.CompSites.alg$df_gap, error = function(e) NULL)) |>

@@ -1,9 +1,12 @@
-#' Title
+#' Helper function to configure parameters for Shiny app run
 #'
-#' @return
+#' @param dir_data path to data input directory
+#' @param dir_results path to results directory
+#' @param dn_checked_sk name of checked data directory
+#'
+#' @return list of configuration parameters when run in Shiny
 #' @export
-#'
-#' @examples
+
 setUpShiny <- function(dir_data, dir_results, dn_checked_sk){
 
   data_CASTmeta_prog <- readRDS(file.path(dir_data, dn_checked_sk, "CASTmetadata.rds"))

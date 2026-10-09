@@ -1,16 +1,15 @@
 #' Set up R console
 #'
-#' @param in_dir
-#' @param out_dir
-#' @param region
-#' @param useBC
-#' @param install_missing
-#' @param load_local
+#' @param in_dir path to data input directory
+#' @param out_dir path to results directory
+#' @param region name of analysis region
+#' @param useBC boolean to use biological filter
+#' @param install_missing boolean to install missing CASToolHelperPckg
+#' @param load_local boolean to load skeleton code (CASTfxn) locally
 #'
-#' @return
+#' @return list of configuration parameters when run in R console
 #' @export
-#'
-#' @examples
+
 setUpRConsole <- function(
     in_dir,
     out_dir,
@@ -19,12 +18,12 @@ setUpRConsole <- function(
     install_missing = TRUE,
     load_local = TRUE
 ) {
-  # Check/install pak
-  if (!requireNamespace("pak", quietly = TRUE)) {
+  # Check/install remotes
+  if (!requireNamespace("remotes", quietly = TRUE)) {
     if (install_missing) {
-      install.packages("pak")
+      install.packages("remotes")
     } else {
-      stop("Package 'pak' is required but not installed.")
+      stop("Package 'remotes' is required but not installed.")
     }
   }
 
@@ -32,7 +31,7 @@ setUpRConsole <- function(
   if (!requireNamespace("CASToolHelperPckg", quietly = TRUE)) {
     if (install_missing) {
       message("Installing CASToolHelperPckg")
-      pak::pak("laura-naslund/CASToolHelperPckg")
+      remotes::install_github("laura-naslund/CASToolHelperPckg")
     } else {
       stop("Package 'CASToolHelperPckg' is required but not installed.")
     }

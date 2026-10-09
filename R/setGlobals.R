@@ -1,24 +1,22 @@
 #' Set global parameters
 #'
-#' @param boo_shiny
-#' @param boo_debug
-#' @param dn_checked_sk
-#' @param boo_plot
-#' @param pt_type
-#' @param pt_fill
-#' @param pt_shape
-#' @param pt_size
-#' @param pt_alpha
-#' @param refOutline_col
-#' @param plot_dpi
-#' @param plot_units
-#' @param plot_H
-#' @param plot_W
+#' @param boo_shiny boolean to run the code in the Shiny application
+#' @param boo_debug boolean to run the application in debug mode
+#' @param dn_checked_sk name of the checked inputs folder
+#' @param boo_plot boolean to generate plots
+#' @param pt_type vector of the types of points plotted (e.g., target site, inside the case degraded)
+#' @param pt_fill vector of point fill colors corresponding to pt_type
+#' @param pt_shape vector of point shapes corresponding to pt_type
+#' @param pt_size vector of point sizes corresponding to pt_type
+#' @param pt_alpha vector of point transparencies corresponding to pt_type
+#' @param refOutline_col hex code for the color of point outlines
+#' @param plot_dpi resolution of plots in dots per inch
+#' @param plot_units units corresponding to plot dimensions
+#' @param plot_H height of plots
+#' @param plot_W width of plots
 #'
-#' @return
+#' @return list of configuration parameters
 #' @export
-#'
-#' @examples
 setGlobals <- function(boo_shiny = FALSE,
                        boo_debug = FALSE,
                        dn_checked_sk = "_CheckedInputs",

@@ -1,12 +1,12 @@
-#' Step progress
+#' Advance progress through the Shiny Run Report progress bar
 #'
-#' @param config
-#' @param msg
-#' @param prog_cnt
-#' @param prog_n
-#' @param prog_sleep
+#' @param config list of configuration parameters
+#' @param msg message to display in the progress bar
+#' @param prog_cnt current step of progress bar
+#' @param prog_n total number of progress bar steps
+#' @param prog_sleep length of system sleep before advancing, intended to give users time to read progress
 #'
-#' @return
+#' @return updated progress bar step count
 #' @export
 #'
 #' @examples

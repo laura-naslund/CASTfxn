@@ -11,10 +11,11 @@
 #' @details Retrieves saved site and cluster objects from their respective rds files.
 #'
 #' @param out_dir directory where all rds files are stored
-#' @param outcaseLabel x
-#' @param incaseColName x
-#' @param useBC x
-#' @param outcaseColName x
+#' @param config list containing the configuration parameters
+#' @param outcaseLabel label for sites outside of the case (used for figure labels)
+#' @param incaseColName name of column in the sites file containing the inside-the-case identifier
+#' @param useBC boolean to use the Bray-curtis dissimilarity method for assigning comparator sites (current deprecated)
+#' @param outcaseColName name of column in the sites file containing the outside-the-case identifier
 #'
 #' @return A list containing data_Sites and data_cluster to be used in the CASTool.
 #'
@@ -26,7 +27,6 @@
 #'
 prepSiteData <- function(out_dir = NULL,
                          config = NULL,
-                         # meta = NULL,
                          outcaseLabel = NULL,
                          incaseColName = NULL,
                          useBC = NULL,
@@ -36,12 +36,6 @@ prepSiteData <- function(out_dir = NULL,
     useBC <- config$useBC
     out_dir = file.path(config$out_dir, config$dn_checked_sk)
   }
-
-  # if(is.null(meta) == FALSE){
-  #   outcaseLabel <- meta$outcaseLabel
-  #   incaseColName <- meta$incaseColName
-  #   outcaseColName <- meta$outcaseColName
-  # }
 
   data_Sites <- readRDS(file.path(out_dir, "data_Sites.rds"))
   data_cluster <- readRDS(file.path(out_dir, "data_cluster.rds"))
