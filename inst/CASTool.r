@@ -69,9 +69,6 @@ if (cfg$boo_shiny == TRUE) {
 if (cfg$boo_shiny == TRUE) {
   prog_cnt <- stepProgress(cfg, "Check input data files", prog_cnt, prog_n, prog_sleep)
 } else {
-  # list.Tables <- checkInputs(dir_uploaded = cfg$in_dir,
-  #                            dir_out = cfg$out_dir)
-
   list.Tables <- checkInputs(dir_uploaded = cfg$in_dir,
                              dir_out = cfg$out_dir)
 
@@ -102,10 +99,10 @@ prog_cnt <- stepProgress(cfg, "Load timestamped stressor data", prog_cnt, prog_n
 
 if (isTRUE(meta$boo_ts)) {
   list.tsStress   <- prepTsStressorData(fn_data = "data_ts.rds",
-                                            fn_meta = "data_tsInfo.rds",
-                                            sub_dir = "_Histograms",
-                                            removeOutliers = meta$removeOutliers,
-                                            config = cfg)
+                                        fn_meta = "data_tsInfo.rds",
+                                        sub_dir = "_Histograms",
+                                        removeOutliers = meta$removeOutliers,
+                                        config = cfg)
 } else {list.tsStress <- NULL}
 
 #~~~~~~~~~~~~~~~~~~~~~~~
@@ -134,9 +131,11 @@ rm(list.tsStress, list.undStress)
 
 #~~~~~~~~~~~~~~~~~~~~~~~
 # 08, Get WS stressor data ####
-list.WSStress <- getWSStressData(boo_ws = meta$exploreWSStressor,
-                                 boo_helper = meta$helperImport,
-                                 config = cfg)
+if (isTRUE(meta$exploreWSStressor)){
+  list.WSStress <- getWSStressData(boo_ws = meta$exploreWSStressor,
+                                   boo_helper = meta$helperImport,
+                                   config = cfg)
+}
 
 #~~~~~~~~~~~~~~~~~~~~~~~
 # 09, Bio response data ####

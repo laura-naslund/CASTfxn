@@ -6,31 +6,21 @@
 #
 #' Prepare timestamped stressor data
 #'
-#' @description Prepare timestamped stressor data for CASTool
+#' @description Prepare timestamped stressor data for CASTool. Filter dataset to parameters selected by the user. Identify and (if selected) remove outliers.
 #'
-#' @details Reviews each uploaded file against both user-input data (either via the shiny app or contained in the CASToolMetadata.xlsx file) to evaluate 1) if the file exists, 2) if it contains the required columns (which requires that they be named correctly), 3) whether datatypes meet requirements.
+#' @param in_dir directory containing checked CASTool data inputs
+#' @param out_dir directory where data outputs are written
+#' @param fn_data name of timestamped stressor rds data file
+#' @param fn_meta name of timestamped stressor rds metadata file
+#' @param removeOutliers boolean indicating whether to remove observations identified as outliers
+#' @param sub_dir subdirectory where stressor histograms are written
 #'
-#' If any required files do not exist, return the list of missing files and shut down.
-#' If all required files exist, proceed to internal checks of the columns and data.
-#' Lastly, perform minimal joins to determine missing values.
-#'
-#' dir_data and dir_results should be absolute and not relative paths.
-#' The function `normalizePath` can be used to convert from relative to absolute path.
-#'
-#' @param in_dir x
-#' @param out_dir directory where all rds files are stored
-#' @param fn_data x
-#' @param fn_meta x
-#' @param removeOutliers x
-#' @param sub_dir x
-#'
-#' @return A list containing data_Sites and data_cluster to be used in the CASTool.
+#' @return A list containing formatted timestamped stressor data (data_tsRaw), metadata (data_tsInfo), and identified outliers (data_tsoutliers).
 #'
 #' @examples
 #' # None at this time
 #' @export
 prepTsStressorData <- function(config = NULL,
-                                 # meta = NULL,
                                  in_dir = NULL,
                                  out_dir = NULL,
                                  fn_data,
@@ -51,10 +41,6 @@ prepTsStressorData <- function(config = NULL,
     in_dir <- file.path(config$out_dir, config$dn_checked_sk)
     out_dir <- config$out_dir
   }
-
-  # if(is.null(meta) == FALSE){
-  #   removeOutliers <- meta$removeOutliers
-  # }
 
   # Create output folder
   out.folders <- c(out_dir, sub_dir)
@@ -81,7 +67,7 @@ prepTsStressorData <- function(config = NULL,
   data_tsInfo   <- data_tsInfo |>
     dplyr::filter(UseInStressorID == 1)
 
-  ## Get tsured stressor values to use in the stressor id
+  ## Get timestamped stressor values to use in the stressor id
   params2use      <- as.character(data_tsInfo$StdParamName)
   data_tsAll    <- dplyr::filter(data_tsAll, StdParamName %in% params2use)
 
@@ -119,15 +105,12 @@ prepTsStressorData <- function(config = NULL,
                   TransfResult) |>
     dplyr::mutate(StressSampleDate = lubridate::parse_date_time(StressSampleDate,
                                               orders = c("ymd", "mdy", "dmy")) |>
-                    lubridate::date(),
-                  # StressSampleID = stringr::str_replace_all(StressSampleID, "[:punct:]", "_"),
-                  # StationID = stringr::str_replace_all(StationID, "[:punct:]", "_")
-                  ) |>
+                    lubridate::date()) |>
     dplyr::group_by(StationID, StressSampleID, StressSampleDate, StdParamName) |>
     dplyr::mutate(TransfResult = mean(TransfResult, na.rm = TRUE)) |>
     dplyr::filter(!is.na(TransfResult))
-  data_tsAll_dups <- data_tsAll[duplicated(data_tsAll),]
-  data_tsAll <- unique(data_tsAll) # should be unique, long-form sample/analyte
+
+  data_tsAll <- unique(data_tsAll) # should be unique, long-form sample/analyte. LCN probably not necessary probably not harmful.
 
   # Duplicate all pH values, one to use for high pH as a stressor and one for low pH as a stressor
   data_pHHigh <- data_tsAll |>

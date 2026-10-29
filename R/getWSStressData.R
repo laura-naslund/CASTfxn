@@ -9,13 +9,7 @@ getWSStressData <- function(boo_ws = NULL,
                             out_dir = NULL,
                             dn_checked_sk = NULL,
                             region = NULL,
-                            #meta = NULL,
                             config = NULL){
-
-  # if(is.null(meta) == FALSE){
-  #   boo_ws <- meta$exploreWSStressor
-  #   boo_helper <- meta$helperImport
-  # }
 
   if(is.null(config) == FALSE){
     out_dir <- config$out_dir

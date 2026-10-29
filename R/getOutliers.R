@@ -7,15 +7,16 @@
 #' @title Identifies Stressor Outliers
 #'
 #' @description Flags stressor outliers using two methods: 3 times IQR and
-#'              6 times sd. If both suggest a given value as an outlier, the
+#'              6 times sd. If either suggest a given value as an outlier, the
 #'              value is identified as an outlier.
 #'
 #' @details In addition to flagging likely outliers (by both 3x IQR and 6X sd),
 #'          this function writes histograms of all untransformed stressors and
 #'          for transformed stressors when transformation is specified in the
-#'          stressor metadata.
+#'          stressor metadata. Writes histograms with resolution of 100 rather than
+#'          default set in config to optimize the size of the results folder.
 #'
-#' Uses the libraries dplyr and ggplot2.
+#' Uses the dplyr library
 #'
 #' @param df_data dataframe containing all stressor data values
 #' @param df_meta dataframe containing stressor metadata
@@ -44,38 +45,20 @@ getOutliers <- function(df_data,
     dir_plots = file.path(out.dir, "_Histograms")
   }
 
-  # Define pipe
-  `%>%` <- dplyr::`%>%`
-  # not_all_na <- function(x) {!all(is.na(x))}
-
-  # Write results directory ----
-  out.folders <- c(out.dir, "_Histograms")
-
-  for (i in 1:length(out.folders)) {
-    if (i == 1) {
-      dir.path <- file.path(out.folders[i])
-    } else {
-      dir.path <- file.path(dir.path, out.folders[i])
-    }
-    if (dir.exists(dir.path) == FALSE) {
-      dir.create(dir.path)
-    }
-  }
-
   # Ensure uniqueness of df_meta
-  df_meta <- df_meta %>%
-    dplyr::select(StdParamName, LogTransf) %>%
-    dplyr::group_by(StdParamName) %>%
+  df_meta <- df_meta |>
+    dplyr::select(StdParamName, LogTransf) |>
+    dplyr::group_by(StdParamName) |>
     dplyr::summarise(LogTransf = max(LogTransf), .groups = "drop_last")
 
   # Merge data with metadata (note that some metadata may not be in the raw data)
   df_data <- merge(df_data, df_meta[, c("StdParamName", "LogTransf")],
                    by.x = "StdParamName", by.y = "StdParamName",
                    all.x = TRUE)
-  df_data <- df_data %>%
+  df_data <- df_data |>
     dplyr::mutate(ResultValue = ifelse(ResultValue < 0 & LogTransf == 1,
-                                       NA, ResultValue)) %>%
-    dplyr::filter(!is.na(ResultValue)) %>%
+                                       NA, ResultValue)) |>
+    dplyr::filter(!is.na(ResultValue)) |>
     dplyr::mutate(TransfResult = ifelse(LogTransf == 1,
                                         suppressWarnings(log1p(ResultValue)),
                                         ResultValue))
@@ -88,30 +71,22 @@ getOutliers <- function(df_data,
     msg <- paste0("Evaluating ", paramName)
     message(msg)
 
-    df_sub <- df_data %>%  # Subset for just one parameter at a time
+    df_sub <- df_data |>  # Subset for just one parameter at a time
       dplyr::filter(StdParamName == paramName)
 
     fn <- paste0(paramName, ".png")
     fn2 <- paste0(paramName, "_transf.png")
 
     # plot histogram of data
-    p1 <- ggplot2::ggplot(df_sub, ggplot2::aes(x = ResultValue)) +
-      ggplot2::geom_histogram(bins = 500) +
-      ggplot2::ggtitle(paste0("Histogram of ", paramName, " observations")) +
-      ggplot2::xlab(paramName) +
-      ggplot2::theme_bw()
-    ggplot2::ggsave(file.path(dir_plots, fn), p1, width = 6, height = 4,
-                    units = "in")
+    png(file.path(dir_plots, fn), width = 8, height = 6, units = "in", res = 100)
+    hist(df_sub$ResultValue, main = paste0("Histogram of ", paramName, " observations"), xlab = paramName)
+    dev.off()
+
 
     if (unique(df_sub$LogTransf) == 1) {
-      p2 <- ggplot2::ggplot(df_sub, ggplot2::aes(x = TransfResult)) +
-        ggplot2::geom_histogram(bins = 500) +
-        ggplot2::ggtitle(paste0("Histogram of Log1p transformed ", paramName,
-                                " observations")) +
-        ggplot2::xlab(paramName) +
-        ggplot2::theme_bw()
-      ggplot2::ggsave(file.path(dir_plots, fn2), p2, width = 6, height = 4,
-                      units = "in")
+      png(file.path(dir_plots, fn2), width = 8, height = 6, units = "in", res = 100)
+      hist(df_sub$TransfResult, main = paste0("Histogram of Log1p transformed ", paramName, " observations"), xlab = paramName)
+      dev.off()
     }
 
     # 3*IQR method for identifying outliers
@@ -120,7 +95,7 @@ getOutliers <- function(df_data,
     outlowlim <- iqr[1] - iqr1.5
     outhilim <- iqr[2] + iqr1.5
 
-    df_sub <- df_sub %>%
+    df_sub <- df_sub |>
       dplyr::mutate(IQRmethod = dplyr::case_when(dplyr::between(TransfResult,
                                                           outlowlim, outhilim) ~ "Good",
                                                  TransfResult < outlowlim ~ "Outlier low",
@@ -132,7 +107,7 @@ getOutliers <- function(df_data,
                       na.rm = TRUE)
     paramSD <- stats::sd(df_sub$TransfResult[is.finite(df_sub$TransfResult)],
                          na.rm = TRUE)
-    df_sub <- df_sub %>%
+    df_sub <- df_sub |>
       dplyr::mutate(SDmethod = dplyr::case_when((abs(TransfResult - paramMean) >
                                                     (6 * paramSD)) ~ "Outlier",
                                                  paramSD == 0 ~ "NE",
@@ -142,12 +117,12 @@ getOutliers <- function(df_data,
     # If both IQR & SD methods agree on "Good", then mark as "Good"
     # If either IQR method OR SD method aren't evaluated, then mark as "NE"
     # If either IQR method or SD method suggest an outlier, then mark as "Outlier"
-    df_sub <- df_sub %>%
+    df_sub <- df_sub |>
       dplyr::mutate(IQRmethod = ifelse(!is.na(IQRmethod), IQRmethod, "NE"),
-                    SDmethod = ifelse(!is.na(SDmethod), SDmethod, "NE")) %>%
+                    SDmethod = ifelse(!is.na(SDmethod), SDmethod, "NE")) |>
       dplyr::mutate(Outlier = dplyr::case_when((IQRmethod == "Good") & (SDmethod == "Good") ~ "Good",
                                                (IQRmethod == "NE") | (SDmethod == "NE") ~ "NE",
-                                               grepl("Outlier", IQRmethod) | (SDmethod == "Outlier") ~ # LCN changed 20250916 to make function match description
+                                               grepl("Outlier", IQRmethod) | (SDmethod == "Outlier") ~
                                                  "Outlier",
                                                TRUE ~ "Good"))
 

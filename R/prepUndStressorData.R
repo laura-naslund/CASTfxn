@@ -6,23 +6,16 @@
 #
 #' @description Prepare undated stressor data for CASTool
 #'
-#' @details Reviews each uploaded file against both user-input data (either via the shiny app or contained in the CASToolMetadata.xlsx file) to evaluate 1) if the file exists, 2) if it contains the required columns (which requires that they be named correctly), 3) whether datatypes meet requirements.
+#' @details Prepare undated stressor data for CASTool. Filter dataset to parameters selected by the user. Identify and (if selected) remove outliers.
 #'
-#' If any required files do not exist, return the list of missing files and shut down.
-#' If all required files exist, proceed to internal checks of the columns and data.
-#' Lastly, perform minimal joins to determine missing values.
+#' @param in_dir directory containing checked CASTool data inputs
+#' @param out_dir directory where data outputs are written
+#' @param fn_data name of timestamped stressor rds data file
+#' @param fn_meta name of timestamped stressor rds metadata file
+#' @param removeOutliers boolean indicating whether to remove observations identified as outliers
+#' @param sub_dir subdirectory where stressor histograms are written
 #'
-#' dir_data and dir_results should be absolute and not relative paths.
-#' The function `normalizePath` can be used to convert from relative to absolute path.
-#'
-#' @param in_dir x
-#' @param out_dir directory where all rds files are stored
-#' @param fn_data x
-#' @param fn_meta x
-#' @param removeOutliers x
-#' @param sub_dir x
-#'
-#' @return A list containing data_Sites and data_cluster to be used in the CASTool.
+#' @return A list containing formatted undated stressor data (data_undRaw), metadata (data_undInfo), and identified outliers (data_undoutliers).
 #'
 #' @export
 prepUndStressorData <- function(in_dir,
@@ -47,10 +40,6 @@ prepUndStressorData <- function(in_dir,
     in_dir <- file.path(config$out_dir, config$dn_checked_sk)
     out_dir <- config$out_dir
   }
-
-  # if(is.null(meta) == FALSE){
-  #   removeOutliers <- meta$removeOutliers
-  # }
 
   # Create output folder
   out.folders <- c(out_dir, sub_dir)
@@ -110,12 +99,10 @@ prepUndStressorData <- function(in_dir,
   data_undAll <- data_undAll  |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, StdParamName,
                   TransfResult)  |>
-    # dplyr::mutate(StressSampleID = stringr::str_replace_all(StressSampleID, "[:punct:]", "_"),
-    #               StationID = stringr::str_replace_all(StationID, "[:punct:]", "_"))  |>
     dplyr::group_by(StationID, StressSampleID, StressSampleDate, StdParamName)  |>
     dplyr::mutate(TransfResult = mean(TransfResult, na.rm = TRUE))  |>
     dplyr::filter(!is.na(TransfResult))
-  data_und_all_dups <- data_und_all[duplicated(data_undAll),]
+
   data_undAll <- unique(data_undAll) # should be unique, long-form sample/analyte
 
   myundData <- list(data_undInfo    = data_undInfo,

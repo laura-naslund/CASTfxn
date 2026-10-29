@@ -1,22 +1,19 @@
-#' Combine stressor data
+#' Combine stress data
 #'
-#' @return
+#' @param boo_ts boolean indicating the presence of timestamped stressor data
+#' @param boo_und boolean indicating the presence of undated stressor data
+#' @param boo_outliers boolean indicating whether to remove outliers
+#' @param ts_stress timestamped stressor data
+#' @param und_stress undated stressor data
+#'
+#' @return A list with combined stressor data (data_stress), metadata (data_stressInfo), and outliers table (data_stressOutliers)
 #' @export
-#'
-#' @examples
 
-combineStressData <- function(#meta = NULL,
-                              boo_ts = NULL,
+combineStressData <- function(boo_ts = NULL,
                               boo_und = NULL,
                               boo_outliers = NULL,
                               ts_stress,
                               und_stress){
-
-  # if(is.null(meta)==FALSE){
-  #   boo_ts <- meta$boo_ts
-  #   boo_und <- meta$boo_und
-  #   boo_outliers <- meta$removeOutliers
-  # }
 
   if (isTRUE(boo_ts) && isTRUE(boo_und)) {
     # Combine metadata
