@@ -1,39 +1,21 @@
-#  Copyright 2025 TetraTech. All rights reserved.
-#  Use, copying, modification, or distribution of this file or any of its contents
-#  is expressly prohibited without prior written permission of TetraTech.
-#
-#  R version 4.4.3
-#
-#' @title prepSiteData
+#' Prep biological response data
 #'
-#' @description Prepare measured stressor data for CASTool
+#' @param file_dir directory containing checked rds files
+#' @param bio biological community indicator
+#' @param loaded vector of loaded files
+#' @param useBC boolean to use biological similarity filter for comparator assignment
+#' @param bioIndex name of index used to determine sample degraded/not-degraded status
+#' @param calcRelAbund boolean to calculate relative abundance of taxa in count data
+#' @param config list containing the configuration parameters
 #'
-#' @details Reviews each uploaded file against both user-input data (either via the shiny app or contained in the CASToolMetadata.xlsx file) to evaluate 1) if the file exists, 2) if it contains the required columns (which requires that they be named correctly), 3) whether datatypes meet requirements.
-#'
-#' If any required files do not exist, return the list of missing files and shut down.
-#' If all required files exist, proceed to internal checks of the columns and data.
-#' Lastly, perform minimal joins to determine missing values.
-#'
-#' dir_data and dir_results should be absolute and not relative paths.
-#' The function `normalizePath` can be used to convert from relative to absolute path.
-#'
-#' @param out_dir directory where all rds files are stored
-#' @param bio x
-#' @param loaded x
-#' @param useBC x
-#' @param bioIndex x
-#' @param calcRelAbund x
-#'
-#' @return A list containing data_Sites and data_cluster to be used in the CASTool.
-#'
+#' @return list containing biological response data (data_bioMetrics), metadata (data_bioMetricsInfo), count data (if available, data_bioCounts), count metadata (if available, data_bioMasterTaxa)
 #' @export
-prepRespData <- function(out_dir,
+prepRespData <- function(file_dir,
                          bio,
                          loaded,
                          useBC,
                          bioIndex,
                          calcRelAbund,
-                         #meta = NULL,
                          config = NULL) {
   # Global Bindings
   bioIndexGp <- not_all_na <- RespSampleDate <- RespSampleID <- StationID <-
@@ -43,16 +25,9 @@ prepRespData <- function(out_dir,
     PctInd <- PctTaxa <- NULL
 
   if(is.null(config) == FALSE){
-    out_dir <- file.path(config$out_dir, config$dn_checked_sk)
+    file_dir <- file.path(config$out_dir, config$dn_checked_sk)
     useBC    <- config$useBC
   }
-
-  # if(is.null(meta) == FALSE){
-  #   loaded   <- meta$loaded
-  #   bioIndex <- meta[[paste0(bio, "IndexGp")]]
-  #   calcRelAbund <- meta$calcRelAbund
-  # }
-
 
   not_all_na <- function(x) {!all(is.na(x))}
 
@@ -65,62 +40,46 @@ prepRespData <- function(out_dir,
     bioIndex <- bioIndexGp
   }
 
-  # define pipe
-  `%>%` <- dplyr::`%>%`
+  bioMetrics_fp <- file.path(file_dir, paste0("data_", bio, "Metrics.rds"))
+  bioMetricsInfo_fp <- file.path(file_dir, paste0("data_", bio, "MetricsInfo.rds"))
 
-  if (bio == "bmi") {
-    data_bioMetrics       <- readRDS(file.path(out_dir, "data_bmiMetrics.rds"))
-    data_bioMetricsInfo   <- readRDS(file.path(out_dir, "data_bmiMetricsInfo.rds"))
-    if (("data_bmiMasterTaxa" %in% loaded) && ("data_bmiCounts" %in% loaded)) {
-      data_bioMasterTaxa  <- readRDS(file.path(out_dir, "data_bmiMasterTaxa.rds"))
-      data_bioCounts      <- readRDS(file.path(out_dir, "data_bmiCounts.rds"))
-    }
-    if (useBC == TRUE) {
-      data_BCdist         <- readRDS(file.path(out_dir, "data_BCdist.rds"))
-    } else {
-      data_BCdist         <- NULL
-    }
+  data_bioMetrics <- readRDS(bioMetrics_fp)
+  data_bioMetricsInfo <- readRDS(bioMetricsInfo_fp)
+
+  if ((paste0("data_", bio, "MasterTaxa") %in% loaded) && (paste0("data_", bio, "Counts") %in% loaded)){
+    bioMasterTaxa_fp <- file.path(file_dir, paste0("data_", bio, "MasterTaxa.rds"))
+    bioCounts_fp <- file.path(file_dir, paste0("data_", bio, "Counts.rds"))
+
+    data_bioMasterTaxa <- readRDS(bioMasterTaxa_fp)
+    data_bioCounts <- readRDS(bioCounts_fp)
   }
-  if (bio == "alg") {
-    data_bioMetrics       <- readRDS(file.path(out_dir, "data_algMetrics.rds"))
-    data_bioMetricsInfo   <- readRDS(file.path(out_dir, "data_algMetricsInfo.rds"))
-    if (("data_algMasterTaxa" %in% loaded) && ("data_algCounts" %in% loaded)) {
-      data_bioMasterTaxa  <- readRDS(file.path(out_dir, "data_algMasterTaxa.rds"))
-      data_bioCounts      <- readRDS(file.path(out_dir, "data_algCounts.rds"))
-    }
-  }
-  if (bio == "fish") {
-    data_bioMetrics       <- readRDS(file.path(out_dir, "data_fishMetrics.rds"))
-    data_bioMetricsInfo   <- readRDS(file.path(out_dir, "data_fishMetricsInfo.rds"))
-    if (("data_fishMasterTaxa" %in% loaded) && ("data_fishCounts" %in% loaded)) {
-      data_bioMasterTaxa  <- readRDS(file.path(out_dir, "data_fishMasterTaxa.rds"))
-      data_bioCounts      <- readRDS(file.path(out_dir, "data_fishCounts.rds"))
-    }
+
+  if (useBC == TRUE) {
+    data_BCdist         <- readRDS(file.path(file_dir, "data_BCdist.rds"))
+  } else {
+    data_BCdist         <- NULL
   }
 
   # Get BIO metric data ----
-  data_bioMetrics <- data_bioMetrics %>%
-    dplyr::select_if(not_all_na) %>%
+  data_bioMetrics <- data_bioMetrics |>
+    dplyr::select_if(not_all_na) |>
     dplyr::mutate(RespSampleDate = lubridate::parse_date_time(RespSampleDate,
-                                      orders = c("ymd", "mdy", "dmy")) %>%
-                    lubridate::date(),
-                  # RespSampleID = stringr::str_replace_all(RespSampleID, "[:punct:]", "_"),
-                  # StationID = stringr::str_replace_all(StationID, "[:punct:]", "_")
-                  )
+                                      orders = c("ymd", "mdy", "dmy")) |>
+                    lubridate::date())
   data_bioMetrics <- unique(data_bioMetrics)
 
   # Get BIO metric info ----
   # Add Quality (based on user-supplied data in list.bio.vars & data_bioMetricsInfo)
-  data_bioMetricsInfo <- data_bioMetricsInfo %>%
-    dplyr::filter(UseYN == "Y") %>%
+  data_bioMetricsInfo <- data_bioMetricsInfo |>
+    dplyr::filter(UseYN == "Y") |>
     dplyr::select(MetricName, MetricLabel, IndexYN, TrendWIncStress,
                   CutoffValue, InclusiveIndicator)
+
   bioIndex.cutval <- data_bioMetricsInfo$CutoffValue[data_bioMetricsInfo$MetricName == bioIndex]
   bioIndex.dir <- data_bioMetricsInfo$TrendWIncStress[data_bioMetricsInfo$MetricName == bioIndex]
   bioIndex.Inc <- data_bioMetricsInfo$InclusiveIndicator[data_bioMetricsInfo$MetricName == bioIndex]
 
   ## Identify quality for primary index ----
-  # if (bioIndex.Inc == "≤" | bioIndex.Inc == "<=") {
   if (bioIndex.Inc == "\u2264" | bioIndex.Inc == "<=") {
     if (bioIndex.dir == "Dec") { # Lower values of the index represent more stress
       data_bioMetrics$Quality <- cut(data_bioMetrics[, bioIndex],
@@ -133,7 +92,6 @@ prepRespData <- function(out_dir,
                                      right = TRUE,
                                      labels = c("Not degraded", "Degraded"))
     }
-  # } else if (bioIndex.Inc == "≥" | bioIndex.Inc == ">=") {
   } else if (bioIndex.Inc == "\u2265" | bioIndex.Inc == ">=") {
     if (bioIndex.dir == "Dec") { # Lower values of the index represent more stress
       data_bioMetrics$Quality <- cut(data_bioMetrics[, bioIndex],
@@ -158,7 +116,7 @@ prepRespData <- function(out_dir,
                                      right = FALSE,
                                      labels = c("Not degraded", "Degraded"))
     }
-  } else { # (ssi.inclind == ">")
+  } else {
     if (bioIndex.dir == "Dec") { # Lower values of the index represent more stress
       data_bioMetrics$Quality <- cut(data_bioMetrics[, bioIndex],
                                      breaks = c(-Inf, bioIndex.cutval, Inf),
@@ -176,31 +134,29 @@ prepRespData <- function(out_dir,
   # If loaded, get bioCounts ----
   if (exists("data_bioCounts")) {
     ## Get BIO count data ----
-    data_bioCounts <- data_bioCounts %>%
+    data_bioCounts <- data_bioCounts |>
       dplyr::mutate(RespSampleDate = lubridate::parse_date_time(RespSampleDate,
-                                          orders = c("ymd", "mdy", "dmy")) %>%
-                      lubridate::date(),
-                    # RespSampleID = stringr::str_replace_all(RespSampleID, "[:punct:]", "_"),
-                    # StationID = stringr::str_replace_all(StationID, "[:punct:]", "_")
+                                          orders = c("ymd", "mdy", "dmy")) |>
+                      lubridate::date()
                     )
 
     if (calcRelAbund == TRUE) {     # Only write this column if needed
-      data_bioCounts <- data_bioCounts %>%
-        dplyr::group_by(RespSampleID, RespSampleDate) %>%
+      data_bioCounts <- data_bioCounts |>
+        dplyr::group_by(RespSampleID, RespSampleDate) |>
         dplyr::mutate(SampleTotAbund = sum(NumInd, na.rm = TRUE),
                          NumTaxa = dplyr::n(),
                          PctInd = round(NumInd / SampleTotAbund, 5),
-                         PctTaxa = round(1 / NumTaxa, 5)) %>%
+                         PctTaxa = round(1 / NumTaxa, 5)) |>
         dplyr::ungroup()
     } else {
-      data_bioCounts <- data_bioCounts %>%
-        dplyr::rename(PctInd = RelAbund) %>%
-        dplyr::group_by(RespSampleID, RespSampleDate) %>%
+      data_bioCounts <- data_bioCounts |>
+        dplyr::rename(PctInd = RelAbund) |>
+        dplyr::group_by(RespSampleID, RespSampleDate) |>
         dplyr::mutate(NumTaxa = dplyr::n(),
-                         PctTaxa = round(1 / SampleTotTaxa, 5)) %>%
+                         PctTaxa = round(1 / SampleTotTaxa, 5)) |>
         dplyr::ungroup()
     } # end if calcRelAbund == TRUE
-    data_bioCounts <- data_bioCounts %>% dplyr::select(StationID, RespSampleID,
+    data_bioCounts <- data_bioCounts |> dplyr::select(StationID, RespSampleID,
                                     RespSampleDate, TaxonID, NumInd, NumTaxa,
                                     PctInd, PctTaxa)
   }
@@ -208,10 +164,10 @@ prepRespData <- function(out_dir,
   # Get Master Taxa file - Done above
 
   if(exists("data_bioMasterTaxa")==FALSE){
-    data_bioMasterTaxa <- NA
+    data_bioMasterTaxa <- NULL
   }
   if(exists("data_bioCounts")==FALSE){
-    data_bioCounts <- NA
+    data_bioCounts <- NULL
   }
 
 

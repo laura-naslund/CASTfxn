@@ -1,9 +1,11 @@
 #' Check target site
 #'
-#' @return
-#' @export
+#' @description
+#' Identifies whether target site cannot be run because it is NA, not in the sites file, or
+#' does not have a comparator site (inside-the-case) identifier.
 #'
-#' @examples
+#' @return a dataframe. If target site meets any of the failure conditions in the description, the dataframe indicates which condition.
+#' @export
 checkTargetSite <- function(TargetSiteID,
                             SiteData){
 

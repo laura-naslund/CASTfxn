@@ -1,9 +1,15 @@
-#' Retrieve watershed stressor data
+#' Get watershed stressor data
 #'
-#' @return
+#' @param boo_ws boolean directing CASTool to run the watershed stressor analysis
+#' @param boo_helper boolean directing CASTool to download data from the CASTool helper package
+#' @param out_dir directory where data outputs are written
+#' @param dn_checked_sk name of checked data directory
+#' @param region analysis region name
+#' @param config list containing the configuration parameters
+#'
+#' @return A list with watershed stressor data and metadata.
+#' If the user elects to not run the watershed stressor module, the function return list with data and metadata set to NULL.
 #' @export
-#'
-#' @examples
 getWSStressData <- function(boo_ws = NULL,
                             boo_helper = NULL,
                             out_dir = NULL,

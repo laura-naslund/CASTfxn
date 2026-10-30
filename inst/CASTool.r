@@ -131,11 +131,9 @@ rm(list.tsStress, list.undStress)
 
 #~~~~~~~~~~~~~~~~~~~~~~~
 # 08, Get WS stressor data ####
-if (isTRUE(meta$exploreWSStressor)){
-  list.WSStress <- getWSStressData(boo_ws = meta$exploreWSStressor,
+list.WSStress <- getWSStressData(boo_ws = meta$exploreWSStressor,
                                    boo_helper = meta$helperImport,
                                    config = cfg)
-}
 
 #~~~~~~~~~~~~~~~~~~~~~~~
 # 09, Bio response data ####
@@ -189,7 +187,7 @@ for (b in seq_along(meta$biocommlist)) {
                                   "RespSampleID",
                                   "RespSampleDate",
                                   "BioComm")] |>
-                           dplyr::mutate(biocomm = paste0(toupper(bio), "SampleID"))) # TODO change this name if possible
+                           dplyr::mutate(biocomm = paste0(toupper(bio), "SampleID")))
 
   rm(temp)
 }

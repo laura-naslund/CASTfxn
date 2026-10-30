@@ -60,41 +60,39 @@ getAllSamplesTable <- function(df_stress = NULL,
     df_sites <- data_Sites
   }
 
-  # define pipe
-  `%>%` <- dplyr::`%>%`
-
   # Prepare stressor data
   # Identify dated stressor types
-  df.meas <- dplyr::filter(df_stress, !is.na(StressSampleDate))
+  df_ts <- dplyr::filter(df_stress, !is.na(StressSampleDate))
   # Identify undated stressor types
-  df.model <- dplyr::filter(df_stress, is.na(StressSampleDate))
+  df_und <- dplyr::filter(df_stress, is.na(StressSampleDate))
 
   # Obtain dated stressor sample IDs ----
-  if (nrow(df.meas) > 0) {
-    df.sampSummary <- unique(df.meas[, c("StationID", "StressSampleID",
+  if (nrow(df_ts) > 0) {
+    df.sampSummary <- unique(df_ts[, c("StationID", "StressSampleID",
                                          "StdParamName", "StressSampleDate")])
     df.sampSummary <- merge(df.sampSummary, df_stressInfo, by = "StdParamName")
-    df.sampSummary <- df.sampSummary %>%
+    df.sampSummary <- df.sampSummary |>
       dplyr::select(StationID, StressSampleID, SourceGroup, StdParamName,
-                    StressSampleDate, Label) %>%
+                    StressSampleDate, Label) |>
       dplyr::mutate(Type = paste0(gsub(" ", "", stringr::str_to_title(SourceGroup)),
                                   "SampleID"))
     df.sampSummary <- unique(df.sampSummary[, c("StationID", "StressSampleID",
                                                 "StressSampleDate", "Type")])
-    df.sampSummary <- df.sampSummary %>%
+    df.sampSummary <- df.sampSummary |>
       tidyr::pivot_wider(id_cols = c(StationID, StressSampleDate), names_from = Type,
                          values_from = StressSampleID, values_fill = NA)
-    chemsamptypes <- colnames(dplyr::select(df.sampSummary, dplyr::ends_with("SampleID")))
+    ts_samp_types <- colnames(dplyr::select(df.sampSummary, dplyr::ends_with("SampleID")))
   }
 
   # Identify response samples ----
-  df_resp <- df_resp %>%
+  df_resp <- df_resp |>
     tidyr::pivot_wider(id_cols = c(StationID, RespSampleDate), names_from = biocomm,
                        values_from = RespSampleID, values_fill = NA)
   df_resp <- unique(df_resp)
   respsamptypes <- colnames(dplyr::select(df_resp, dplyr::ends_with("SampleID")))
 
   # Combine with response data types
+
   df.sampSummary <- merge(df.sampSummary, df_resp,
                           by.x = c("StationID", "StressSampleDate"),
                           by.y = c("StationID", "RespSampleDate"),
@@ -102,23 +100,23 @@ getAllSamplesTable <- function(df_stress = NULL,
   rm(df_resp)
 
   # Add undated stressor data ----
-  if (nrow(df.model) > 0) {
-    df.modelTrim <- as.data.frame(df.model) %>%
-      dplyr::distinct(StationID, StressSampleID) %>%
+  if (nrow(df_und) > 0) {
+    df_undTrim <- as.data.frame(df_und) |>
+      dplyr::distinct(StationID, StressSampleID) |>
       dplyr::rename(ModeledSampleID = StressSampleID)
 
-    df.sampSummary <- merge(df.sampSummary, df.modelTrim, by = "StationID",
+    df.sampSummary <- merge(df.sampSummary, df_undTrim, by = "StationID",
                             all = TRUE)
     df.sampSummary <- unique(df.sampSummary)
 
-    df.sampSummary <- df.sampSummary %>%
-      dplyr::rename(SampleDate = StressSampleDate) %>%
-      dplyr::select(StationID, SampleDate, dplyr::all_of(chemsamptypes),
+    df.sampSummary <- df.sampSummary |>
+      dplyr::rename(SampleDate = StressSampleDate) |>
+      dplyr::select(StationID, SampleDate, dplyr::all_of(ts_samp_types),
                     ModeledSampleID, dplyr::all_of(respsamptypes))
   } else {
-    df.sampSummary <- df.sampSummary %>%
-      dplyr::rename(SampleDate = StressSampleDate) %>%
-      dplyr::select(StationID, SampleDate, dplyr::all_of(chemsamptypes),
+    df.sampSummary <- df.sampSummary |>
+      dplyr::rename(SampleDate = StressSampleDate) |>
+      dplyr::select(StationID, SampleDate, dplyr::all_of(ts_samp_types),
                     dplyr::all_of(respsamptypes))
   }
 

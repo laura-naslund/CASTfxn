@@ -16,7 +16,7 @@
 #' Uses the library dplyr, stringr
 #'
 #' @param TargetSiteID Site ID for the site being evaluated
-#' @param df_sites Sites table with cluster membership. Default = "data_Sites".
+#' @param df_sites Sites table with cluster membership.
 #' @param df_cluster Dataframe containing reach IDs and their associated clusters
 #' @param df_bioCoOccur Dataframe containing paired stressor/response sample data
 #' @param bioIndex Character vector corresponding to the biological index column name.
@@ -42,11 +42,9 @@
 #' @param dir_results Directory containing all results. Default = "file.path(getwd(),"Results")"
 #' @param dir_sub Subdirectory for outputs from this function. Default = "SiteInfo"
 #'
-#' @return A list containing 1) a vector of comparator site identifiers (comp.sites),
-#'         2) a vector of all sites representing "outside the case", and 3) a dataframe
-#'         containing gap details (function name, condition, result, and comment);
-#'         and a tab-delimited text file containing the list of comparator sites with
-#'         additional information relating to their similarity to the target site.
+#' @return A list containing a vector of comparator site identifiers (comp.sites), comparator reaches,
+#'         noncomparator site identifiers, noncomparator reaches, and a dataframe
+#'         containing gap details associated with the biological dissimilarity filter (if used)
 #'
 #' @keywords internal
 #' @examples
@@ -78,7 +76,7 @@ getComparators<- function(TargetSiteID,
   # For QC purposes
   boo_DEBUG <- FALSE
 
-  if (boo_DEBUG == TRUE) { # Specific to WA state
+  if (boo_DEBUG == TRUE) {
     TargetSiteID = TargetSiteID
     df_sites = data_Sites
     df_cluster = data_cluster # need if useAllCompReaches == TRUE
@@ -99,9 +97,6 @@ getComparators<- function(TargetSiteID,
   if(is.null(config)==FALSE){
     useBC <- config$useBC
   }
-
-  # define pipe
-  `%>%` <- dplyr::`%>%`
 
   fn.compsites <- file.path(dir_results, TargetSiteID, dir_sub,
                             paste0(TargetSiteID, "_COMPARATORS.csv"))
@@ -153,7 +148,7 @@ getComparators<- function(TargetSiteID,
     }
 
     df_bcdist <- df_bcdist[, c("StationID", TargetColName)]
-    df_bcdist <- df_bcdist %>%
+    df_bcdist <- df_bcdist |>
       dplyr::filter(StationID %in% outcaseSites)
     df_bcdist <- as.data.frame(df_bcdist[order(df_bcdist[, TargetColName]), ])
     df_bcdist.temp <- df_bcdist[df_bcdist[, TargetColName] <= bc_cutoff, ]
@@ -178,14 +173,6 @@ getComparators<- function(TargetSiteID,
         )
 
       df_gap <- df_gap |> dplyr::bind_rows(gap.statement)
-      # gap.statement <- cbind.data.frame("getComparators",
-      #                                   paste0("bc.dist <= ", bc_cutoff),
-      #                                   num.good,
-      #                                   paste("max bc.dist for ",
-      #                                         nrow(df_bcdist.temp) - 1,
-      #                                         "comparators = ",
-      #                                         max(df_bcdist.temp[, TargetColName])))
-      # colnames(gap.statement) <- c("fxnname", "condition", "result", "comment")
     } else {
       gap.statement <- data.frame(
         fxnname = paste0("getComparators ", bio),
@@ -196,12 +183,6 @@ getComparators<- function(TargetSiteID,
         )
 
       df_gap <- df_gap |> dplyr::bind_rows(gap.statement)
-      # gap.statement <- cbind.data.frame("getComparators",
-      #                                   paste0("bc.dist <= ", bc_cutoff),
-      #                                   num.good,
-      #                                   paste("max bc.dist = ",
-      #                                         round(max(df_bcdist.temp[, TargetColName]), 4)))
-      # colnames(gap.statement) <- c("fxnname", "condition", "result", "comment")
     }
 
     bc_cutofftxt <- ifelse((bc_cutoff * 100) < 10, paste0(0, bc_cutoff * 100),
@@ -235,12 +216,11 @@ getComparators<- function(TargetSiteID,
 
     # Outside the case = outcaseColName; Inside the case uses cluster
     outcaseValue <- df_sites$OutcaseCol[df_sites$StationID == TargetSiteID]
-    df_outcase <- dplyr::select(df_sites, StationID, OutcaseCol, IncaseCol)
-    outcaseSites <- as.vector(df_outcase$StationID[df_outcase$OutcaseCol == outcaseValue])
+    outcaseSites <- as.vector(df_sites$StationID[df_sites$OutcaseCol == outcaseValue])
 
     # Get cluster to which the target site belongs (inside the case identifier)
-    incaseValue <- as.numeric(df_outcase$IncaseCol[df_outcase$StationID == TargetSiteID])
-    incaseSites <- unique(as.vector(df_outcase$StationID[df_outcase$IncaseCol == incaseValue]))
+    incaseValue <- as.numeric(df_sites$IncaseCol[df_sites$StationID == TargetSiteID])
+    incaseSites <- unique(as.vector(df_sites$StationID[df_sites$IncaseCol == incaseValue]))
 
     # Get cluster sites also having paired stressor/response samples
     eligsites <- as.vector(unique(df_bioCoOccur$StationID))
@@ -254,38 +234,12 @@ getComparators<- function(TargetSiteID,
     } else {
       comp.reaches <- unique(as.vector(df_cluster$COMID[df_cluster$ClusterID == incaseValue]))
     }
+
     all.sites <- unique(outcaseSites)
     all.reaches <- unique(as.vector(df_sites$COMID[df_sites$StationID %in% all.sites]))
-    statement <- paste0("All '", incaseLabel, "=", incaseValue, "' sites from '",
-                        outcaseLabel, "' are used as comparators.")
-    # gap.statement <- cbind.data.frame("getComparators",
-    #                                   "bc.dist not used",
-    #                                   paste0("Inside the case: ", incaseLabel,
-    #                                          " = ", length(incaseSites)),
-    #                                   paste(statement))
-    # gap.statement <- cbind.data.frame("getComparators",
-    #                                   "bc.dist not used",
-    #                                   paste0("Outside the case: ", outcaseLabel,
-    #                                          " = ", length(outcaseSites)),
-    #                                   paste(statement))
-    # colnames(gap.statement) <- c("fxnname", "condition", "result", "comment")
 
-    # Write comparators table (station id, sample id, sample date, index value,
-    # and quality)
-    comp.samps <- dplyr::filter(df_bioCoOccur, StationID %in% comp.sites) %>%
-      dplyr::filter(StationID != TargetSiteID) %>%
-      dplyr::select(StationID, RespSampleID, RespSampleDate,
-                      dplyr::all_of(bioIndex), Quality)
-    comp.samps <- unique(comp.samps)
-    #write.csv(comp.samps, fn.compsites, row.names = FALSE)
-
+    df_gap <- NULL
   }
-
-  # fn.gaps <- paste0(TargetSiteID, "_datagaps.tab")
-  # fn.gaps <- file.path(dir_results, TargetSiteID, fn.gaps)
-  # utils::write.table(gap.statement, fn.gaps, append = TRUE, col.names = FALSE,
-  #             row.names = FALSE, sep = "\t")
-
 
   CompMsg2 <- paste("Using final number of comparators = ", length(comp.sites) - 1)
   message(CompMsg2)
