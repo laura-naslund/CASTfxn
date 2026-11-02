@@ -33,10 +33,6 @@ getOutliers <- function(df_data,
                         df_meta,
                         dir_plots) {##FUNCTION.START
 
-  # Global Bindings
-  data_Stress <- data_stressInfo <- out.dir <- StdParamName <- LogTransf <-
-    ResultValue <- TransfResult <- IQRmethod <- SDmethod <- NULL
-
   # Debug
   boo_DEBUG <- FALSE
   if (boo_DEBUG == TRUE) {

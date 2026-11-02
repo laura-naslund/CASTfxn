@@ -57,16 +57,6 @@ getVPSSI <- function(TargetSiteID,
                      boo_plot = TRUE,
                      targetSampleLabels = targetSampleLabels) {
 
-  # Global Bindings
-  df_stressorMetadata <- df_PairedStressResp <- bioComm <- bioMetricData <-
-    bioMetricInfo <- bioIndex <- dir_results <- boo_plot_user <- Type <-
-    Stressor <- SSIndex <- Label <- LogTransf <- MetricName <- StationID <-
-    StressSampleID <- StressSampleDate <- RespSampleID <- RespSampleDate <-
-    IncaseYN <- IncaseCol <- Quality <- SSIValue <- SSIqual <- StressorValue <-
-    n <- VPpred_Deg <- Sc_VPlog <- y <- y.name <- x <- Sc_VPSSI_box <- Min <-
-    q25 <- q50 <- q75 <- Max <- TransfValue <- incaseLabel <- bioIndexName <-
-    LoE <- Score <- BioComm <- NULL
-
   # Debugging
   boo.DEBUG <- FALSE
   #

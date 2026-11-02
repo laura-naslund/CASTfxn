@@ -25,10 +25,6 @@ prepUndStressorData <- function(in_dir,
                                 config = NULL,
                                 removeOutliers,
                                 sub_dir = "_Histograms") {
-  # Global Bindings
-  UseInStressorID <- StdParamName <- data_measOutliers <- StationID <-
-    StressSampleID <- StressSampleDate <- TransfResult <- IQRmethod <-
-    SDmethod <- Outlier <- data_und_all <- NULL
 
   # Debug
   boo.debug = TRUE

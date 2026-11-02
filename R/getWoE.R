@@ -51,12 +51,6 @@ getWoE <- function(TargetSiteID,
                    plotunits,
                    boo_plot = TRUE) {##FUNCTION.START
 
-  # Global Bindings
-  bioComm <- df_LoE <- Score <- StressorValue <- StationID <- StressSampleID <-
-    StressSampleDate <- RespSampleID <- RespSampleDate <- Stressor <- LoE <-
-    NumSupport <- NumRefute <- NumIndeterminate <- NumNotEvaluated <-
-    Evidence <- Count <- max_count <- df_stressorMetadata <- NULL
-
   # QC data
   boo_DEBUG <- FALSE
 

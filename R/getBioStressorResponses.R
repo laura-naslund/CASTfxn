@@ -73,17 +73,6 @@ getBioStressorResponses <- function(TargetSiteID,
 
   `:=` <- data.table::`:=`
 
-  # Global Bindings
-  df_stressorMetadata <-
-    bioMetricInfo <- bioMetricData <- df_PairedStressResp <- bioComm <-
-    bioIndex <- plot_dpi <- plot_H <- plot_W <- plot_units <-
-    Type <- StationID <- StressSampleID <- RespSampleID <- Quality <-
-    RefSiteFlag <- Stressor <- Response <- lwr <- upr <- StressSampleDate <-
-    RespSampleDate <- stressVal <- respVal <- n_site <- n_comp <-
-    SRLin_Score_inside <- SRLin_Score_outside <- estimate <- LoE <-
-    bioIndexName <- StressorValue <- Score <- list.SiteSummary <- samplim <-
-    data_plotvars <- refOutline_col <- Estimate <- NULL
-
   boo.DEBUG <- FALSE
 
   if (boo.DEBUG == TRUE) {

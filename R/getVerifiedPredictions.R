@@ -57,18 +57,6 @@ getVerifiedPredictions <- function(TargetSiteID,
 
   `:=` <- data.table::`:=`
 
-  # Global Bindings
-  df_stressorMetadata <- df_PairedStressResp <- bioComm <- bioTaxaData <-
-    bioMasterTaxa <- bioIndexGp <- dir_results <- boo.plot.user <- SSTVname <-
-    SensMin <- SensMax <- Stressor <- LogTransf <- Label <- TaxonID <-
-    IncaseYN <- Quality <- StationID <- IncaseCol <- StressSampleID <-
-    StressSampleDate <- RespSampleID <- RespSampleDate <- RefSiteFlag <-
-    BetterThan <- sstv.sensall <- sstv.sensmaxLabel <- Group <- NumInd <-
-    PctInd <- PctTaxa <- NumInds <- PctInds <- NumTaxa <- variable <- value <-
-    Min <- q25 <- q50 <- q75 <- Max <- StressorLabel <- StressorValue <-
-    Response <- ResponseValue <- Score <- Scores <- Type <- OverallMax <-
-    bioIndex <- bioIndexName <- LoE <- BioComm <- NULL
-
   # # Debugging
   boo.DEBUG <- FALSE
   # #

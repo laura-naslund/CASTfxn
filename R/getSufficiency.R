@@ -92,14 +92,6 @@ getSufficiency <- function(TargetSiteID,
 
   `:=` <- data.table::`:=`
 
-  # Global Bindings
-  df_PairedStressResp <- list.CompSites <- df_stressorMetadata <- bioComm <-
-    bioIndex <- dir_results <- boo_plot_user <- Type <- StationID <-
-    StressSampleID <- StressSampleDate <- RespSampleID <- RespSampleDate <-
-    Quality <- Stressor <- LogTransf <- Label <- y <- y.name <- x <-
-    StressorCode <- StressorValue <- n <- SRpred_Deg <- Sc_SRlog <-
-    bioIndexName <- LoE <- Score <- BioComm <- NULL
-
   # Debug
   boo_DEBUG <- FALSE
 

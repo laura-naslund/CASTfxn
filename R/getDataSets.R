@@ -41,7 +41,7 @@
 #'
 #' @keywords internal
 #' @examples
-#' # None at this time 
+#' # None at this time
 #' @export
 getDataSets <- function(TargetSiteID
                         , compSites # inside the case
@@ -52,10 +52,6 @@ getDataSets <- function(TargetSiteID
                         , df_biometrics
                         , df_stressinfo
                         ) {##FUNCTION.START
-  
-  # Global Bindings
-  comp_sites <- all_sites <- data_bioCoOccur <- stressors <- bioMetricData <- 
-    data_stressInfo <- StationID <- StdParamName <- NULL
 
   # For QC purposes
   boo_DEBUG <- FALSE

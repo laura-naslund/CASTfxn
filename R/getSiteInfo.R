@@ -67,15 +67,6 @@ getSiteInfo <- function(TargetSiteID,
                         dir_sub = "SiteInfo",
                         boo_plot = TRUE) {##FUNCTION.START
 
-  # Global Bindings
-   list.CompSites <- data_Sites <- data_sampSummary <-
-    data_bmiMetrics <- bmiIndexGp <- data_algMetrics <- algIndexGp <-
-    data_fishMetrics <- fishIndexGp <- outcaseLabel <- incaseLabel <- in.dir <-
-    region <- StationID <- Latitude <- Longitude <- RefSiteFlag <- COMID <-
-    OutcaseCol <- IncaseCol <- SampleDate <- SampleType <- yLoc <-
-    df_algMetrics <- df_fishMetrics <- Quality <- Index <- Samples <-
-    RespSampleID <- RespSampleDate <- Score <- Case <- NULL
-
   # DEBUG
   boo_DEBUG <- FALSE
   #

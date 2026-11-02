@@ -27,9 +27,6 @@ prepTsStressorData <- function(config = NULL,
                                  fn_meta,
                                  removeOutliers = NULL,
                                  sub_dir = "_Histograms") {
-  # Global Bindings
-  UseInStressorID <- StdParamName <- StationID <- StressSampleID <-
-    StressSampleDate <- TransfResult <- IQRmethod <- SDmethod <- Outlier <- NULL
 
   # Debug
   boo.debug = TRUE

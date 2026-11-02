@@ -56,12 +56,6 @@ getTimeSeq <- function(TargetSiteID,
                        dir_sub = "_WoE",
                        boo_plot = TRUE) {##FUNCTION.START
 
-  # Global Bindings
-  bioComm <- bioIndex <- data_Stress <- bioMetricData <- data_bmiMetricsInfo <-
-    df_stressorMetadata <- StressSampleDate <- StationID <- RespSampleDate <-
-    StressSampleID <- RespSampleID <- Quality <- Value <- type <- SampleDate <-
-    bioIndexName <- StressorValue <- Stressor <- LogTransf <- Label <- NULL
-
   # Debug
   boo_DEBUG <- FALSE
 

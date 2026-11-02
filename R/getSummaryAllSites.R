@@ -25,7 +25,7 @@
 #' Default = "file.path(getwd(), "Results")"
 #' @param dir_sub Subdirectory for weight of evidence (WoE) outputs used by this function.
 #' Default = "WoE"
-#' @param df_sites Data frame of sites. 
+#' @param df_sites Data frame of sites.
 #'
 #' @return Tab-delimited text summary data file containing site id, latitude,
 #' longitude, cluster, response (bio index), response value (index score),
@@ -35,7 +35,7 @@
 #'
 #' @keywords internal
 #' @examples
-#' # None at this time 
+#' # None at this time
 #' @export
 getSummaryAllSites <- function(biocommlist,
                                bmiIndex,
@@ -45,13 +45,6 @@ getSummaryAllSites <- function(biocommlist,
                                dir_results = file.path(getwd(), "Results"),
                                dir_sub = "WoE",
                                df_sites) {##FUNCTION.START
-  
-  # Global Bindings
-  localdir <- StationID_Master <- FinalLatitude <- FinalLongitude <- BioComm <- 
-    BioDeg <- NumRespSamples <- minIndex <- meanIndex <- maxIndex <- 
-    StressorType <- NumStressSamples <- NumStressors <- WtTot_WoE <- 
-    WtTotTS_barplot <- WtTotCO_boxplot <- WtTotSR_InCase_LogRegr <- 
-    WtTotSR_InCase_LinRegr <- WtTotSR_OutCase_LinRegr <- WtTotVP_boxplot <- NULL
 
   # define pipe
   `%>%` <- dplyr::`%>%`

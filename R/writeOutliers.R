@@ -35,10 +35,6 @@ writeOutliers <- function(TargetSiteID,
                           allSites = NULL,
                           dir_results = file.path(getwd(), "Results")) {
 
-  # Global Bindings
-  data_outliers <- data_stressInfo <- list.CompSites <-
-    StationID <- TransfResult <- Outlier <- StdParamName <- IncaseCol <-  NULL
-
   # Debug
   boo.debug = FALSE
   #

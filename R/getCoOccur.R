@@ -103,14 +103,6 @@ getCoOccur <- function(TargetSiteID,
 
   `:=` <- data.table::`:=`
 
-  # Global Bindings
-  df_PairedStressResp <- siteDetectsAll <- data_stressInfo <-
-    list.CompSites <- bioComm <- bioIndex <- Type <- StdParamName <- Stressor <-
-    StationID <- StressSampleID <- StressSampleDate <- IncaseCol <-
-    OutcaseCol <- RespSampleID <- RespSampleDate <- RefSiteFlag <- BetterThan <-
-    Quality <- StressorValue <- NotNA <- DirIncStress <- LogTransf <- Label <-
-    incaseLabel <- Sc_Box <- bioIndexName <- LoE <- Score <- SSIndex <- NULL
-
   boo_DEBUG <- FALSE
 
   if (boo_DEBUG==TRUE) {

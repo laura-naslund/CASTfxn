@@ -35,10 +35,6 @@ getAvailableDataTypes <- function(TargetSiteID,
                                   biocommlist,
                                   dir_results) {##FUNCTION.START
 
-  # Global Bindings
-  data_sampSummary <- data_Stress <- StationID <- StdParamName <-
-    TransfResult <- NULL
-
   boo.DEBUG <- FALSE
 
   if(boo.DEBUG) {

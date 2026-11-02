@@ -16,13 +16,6 @@ getCoOccurDataset <- function(df_sites,
                               index,
                               lagdays = c(0, 0)) {##FUNCTION.START
 
-  # Global Settings
-  data_Sites <- data_Stress <- data_bmiMetrics <- bmiIndex <-
-    StressSampleDate <- AlgSampFlag <- FishSampFlag <- StdParamName <-
-    TransfResult <- RespSampleDate <- RespSampleID <- StationID.y <-
-    StationID.x <- DateDiff <- StressSampleID <- StationID <- Quality <-
-    BioComm <- NULL
-
   # Debug
   boo_DEBUG <- FALSE
 

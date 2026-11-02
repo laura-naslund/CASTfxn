@@ -17,12 +17,6 @@ prepRespData <- function(file_dir,
                          bioIndex,
                          calcRelAbund,
                          config = NULL) {
-  # Global Bindings
-  bioIndexGp <- not_all_na <- RespSampleDate <- RespSampleID <- StationID <-
-    UseYN <- MetricName <- MetricLabel <- IndexYN <- TrendWIncStress <-
-    CutoffValue <- InclusiveIndicator <-NumInd <-
-    SampleTotAbund <- NumTaxa <- RelAbund <- SampleTotTaxa <- TaxonID <-
-    PctInd <- PctTaxa <- NULL
 
   if(is.null(config) == FALSE){
     file_dir <- file.path(config$out_dir, config$dn_checked_sk)

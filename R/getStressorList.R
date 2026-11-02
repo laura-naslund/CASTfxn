@@ -78,14 +78,7 @@ getStressorList <- function(TargetSiteID,
                             plotVars,
                             dir_results = file.path(getwd(), "Results"),
                             dir_sub = "CandidateCauses") {##FUNCTION.START
-  # Global Bindings
-  list.CompSites <- siteDetectsAll <- data_Stress <- data_stressInfo <- 
-    list.bioParamsDEL <- data_plotvars <- StationID <- StdParamName <- 
-    StressSampleID <- StressSampleDate <- ResultValue <- TransfResult <- 
-    RefSiteFlag <- GroupName <- GrpNm <- value <- Label <- boo_plot_ref <- 
-    Biocomm <- Stressor <- LogTransf <- SSTV <- SSI <- SensMin <- SensMax <- 
-    TolMin <- TolMax <- DirIncStress <- SSTVname <- SSIndex <- NULL
-    
+
   # DEBUGGING ####
   boo.DEBUG <- FALSE
   #

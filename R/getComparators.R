@@ -68,11 +68,6 @@ getComparators<- function(TargetSiteID,
                           bio,
                           config = NULL) {##FUNCTION.START
 
-  # Global Bindings
-  data_Sites <- data_cluster <- data_bmiCoOccur <- bmiIndex <- StationID <-
-    OutcaseCol <- IncaseCol <- RespSampleID <- RespSampleDate <- Quality <-
-    NULL
-
   # For QC purposes
   boo_DEBUG <- FALSE
 

@@ -46,13 +46,6 @@ getWSStressorFigs <- function(TargetSiteID = TargetSiteID,
                               plotunits = "in",
                               dir_results) { # FUN: Start
 
-  # Global Bindings
-  data_stressorWS <- data_stressorinfoWS <-
-    StationID <- SampleDate <- SampleType <- COMID <- WatershedValue <-
-    mySiteInfo <- StreamCatVar <- TargetValue <- Year <- WatershedValueMedian <-
-    yLoc <- Label <- TargetAboveMedian <- list.CompSites <- data_sampSummary <-
-    data_Sites <- IncaseCol <- NULL
-
   # Debug
   boo.debug <- FALSE
   if (boo.debug) {

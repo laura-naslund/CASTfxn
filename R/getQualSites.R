@@ -59,16 +59,6 @@ getQualSites <- function(TargetSiteID,
                          dir_results = dir_results,
                          dir_sub = "SiteInfo") {##FUNCTION.START
 
-  # Global Bindings
-  bioComm <- data_bioCoOccur <- bioIndex <- list.CompSites <- StationID <-
-    Quality <- IncaseCol <- OutcaseCol <- StressSampleDate <- RespSampleDate <-
-    StressSampleID <- RespSampleID <- RefSiteFlag <- IncaseYN <- OutcaseYN <-
-    BetterThan <- IncaseSamples <- IncaseGood <- IncaseBad <- OutcaseSamples <-
-    OutcaseGood <- OutcaseBad <- TotalSamples <- TotalSamplesGood <-
-    TotalSamplesBad <- RefSamples <- RefSamplesGood <- RefSamplesBad <-
-    rowname <- V1 <- Label <- getQualSites <- InsideCaseSamples <-
-    OutsideCaseSamples <- AllSamples <- ReferenceSamples <- BioComm <- NULL
-
   # Debug
   boo_DEBUG <- FALSE
   #

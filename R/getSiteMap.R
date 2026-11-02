@@ -62,11 +62,6 @@ getSiteMap <- function(sp_outline,
                        dir_sub = "SiteInfo",
                        dir_map_rmd) {
 
-  # Global Bindings
-  STATE.shp <- NHD.STATE <- data_Sites <- list.CompSites <- data_plotvars <-
-    refOutline_col <- StationID <- Longitude <- Latitude <- RefSiteFlag <-
-    COMID <- IncaseCol <- OutcaseCol <- Case <- geometry <- NULL
-
   # Debug
   boo_DEBUG <- FALSE
 
