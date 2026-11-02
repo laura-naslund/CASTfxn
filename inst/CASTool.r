@@ -302,6 +302,7 @@ for (site in seq_len(nrow(df_targets))) {
   # 14, getSiteInfo, getWSStressorFigs, getSiteMap ####
   prog_cnt <- stepProgress(cfg, "Generate index boxplots and create site map", prog_cnt, prog_n, prog_sleep)
 
+
   ## Index score boxplot
   list.SiteInfo <- getSiteInfo(TargetSiteID   = TargetSiteID,
                               TargetCOMID    = list.CompSites$TargetCOMID,
@@ -338,9 +339,8 @@ for (site in seq_len(nrow(df_targets))) {
 
   ## Site map
   boundary <- readRDS(file.path(cfg$out_dir, cfg$dn_checked_sk, "boundary.rds"))
-  reaches <- readRDS(file.path(cfg$out_dir, cfg$dn_checked_sk, "reaches.rds")) |>
-    dplyr::mutate(COMID = as.character(COMID))
-  flowline <- reaches |>
+  flowline <- readRDS(file.path(cfg$out_dir, cfg$dn_checked_sk, "reaches.rds")) |>
+    dplyr::mutate(COMID = as.character(COMID))|>
     dplyr::left_join(list.SiteData$cluster |>
                        dplyr::mutate(COMID = as.character(COMID),
                               ClusterID = as.factor(ClusterID)),
@@ -358,7 +358,7 @@ for (site in seq_len(nrow(df_targets))) {
              dir_sub      = "SiteInfo",
              dir_map_rmd  = file.path(system.file(package = "CASTfxn"), "rmd"))
 
-  rm(boundary, reaches, flowline)
+  rm(boundary, flowline)
 
   msg <- "getSiteInfo, getWSstressorFigs, and getSiteMap are complete."
   message(msg)
@@ -396,8 +396,6 @@ for (site in seq_len(nrow(df_targets))) {
                 df_stressInfo = list.Stress$data_stressInfo,
                 df_Sites      = list.SiteData$site,
                 siteDetectsAll= list.AvailData$siteDetectsAll,
-                compSites     = list.CompSites$comp.sites,
-                allSites      = list.CompSites$all.sites,
                 dir_results   = dir_results)
 
   msg <- "getAvailableDataTypes and writeOutliers are complete."
@@ -463,7 +461,7 @@ for (site in seq_len(nrow(df_targets))) {
     ### 16, getQualSites ####
     prog_cnt <- stepProgress(cfg, paste0(bioComm, "; summarize index values"), prog_cnt, prog_n, prog_sleep)
 
-     list.QualSites <- getQualSites(TargetSiteID = TargetSiteID,
+    list.QualSites <- getQualSites(TargetSiteID = TargetSiteID,
                                         biocomm      = bioComm,
                                         df_qual      = data_bioCoOccur,
                                         colBio       = bioIndexGp,

@@ -18,14 +18,12 @@
 #' @param df_SampSummary dataframe containing sample IDs for samples collected
 #'                       at the target site, organized by sample date (rows) and
 #'                       type (columns)
-# @param measStressSamps boolean indicating if measured stressor data are expected..
-# @param modStressSamps boolean indicating if modeled stressor data are expected.
-#' @param df_stress
+#' @param df_stress stressor data
 #' @param biocommlist vector of biocommunity data expected.
 #' @param dir_results Directory containing all results.
 #'
 #' @return A list containing five boolean values 1) useBMI, 2) useAlg, 3) useFish,
-#'         4) noStressors, 5) noResponses, and 6) siteDetectsAll.
+#'         4) noStressors, 5) noResponses, and a vector of available stressor parameters 6) siteDetectsAll.
 #'
 #' @keywords internal
 #' @examples
@@ -51,8 +49,6 @@ getAvailableDataTypes <- function(TargetSiteID,
     dir_results <- dir_results
   }
 
-  # define pipe and not_all_na function
-  `%>%` <- dplyr::`%>%`
   not_all_na <- function(x) {!all(is.na(x))}
 
   # Check for directory, if not existing, create
@@ -64,9 +60,9 @@ getAvailableDataTypes <- function(TargetSiteID,
   df_gap <- data.frame(fxnname = character(), condition = character(), result = character(), comment = character())
 
   # ID stressor samples ----
-  avail.data <- df_SampSummary %>%
-    dplyr::filter(StationID == TargetSiteID) %>%
-    dplyr::select(dplyr::ends_with("SampleID")) %>%
+  avail.data <- df_SampSummary |>
+    dplyr::filter(StationID == TargetSiteID) |>
+    dplyr::select(dplyr::ends_with("SampleID")) |>
     dplyr::select_if(not_all_na)
   samptypes <- names(avail.data)
 
@@ -107,45 +103,8 @@ getAvailableDataTypes <- function(TargetSiteID,
       dplyr::pull(StdParamName)
 
     if(length(siteDetectsAll) == 0){
-      # LCN removed 3/23/26 duplicative of gap message generated in skeleton code
-
-      # msg <- paste("No stressor observations identified for", TargetSiteID)
-      # message(msg)
-      #
-      # gap.statement <- data.frame(
-      #   fxnname = "getAvailableDataTypes",
-      #   condition = "Number of stressor observations",
-      #   result = "0",
-      #   comment = msg
-      # )
-      #
-      # df_gap <- df_gap |> dplyr::bind_rows(gap.statement)
-
       noStressors <- TRUE
     }
-
-    # # This syntax doesn't work because the length(siteDetectsAll) == 0 condition will never happen because the colnames will include ID columns from pivoted data frame
-    # siteStressAll <- df_stress %>%
-    #   dplyr::filter(StationID == TargetSiteID) %>%
-    #   tidyr::pivot_wider(names_from = StdParamName,
-    #                      values_from = TransfResult) %>%
-    #   dplyr::select_if(not_all_na)
-    #
-    # siteDetectsAll <- as.vector(colnames(siteStressAll))
-    #
-    # if (length(siteDetectsAll) != 0) {
-    #   siteDetectsAll <- siteDetectsAll[!(siteDetectsAll %in%
-    #                                        c("StationID", "StressSampleID",
-    #                                          "StressSampleDate"))]
-    # } else {
-    #   msg <- paste("No detected stressors identified for", TargetSiteID)
-    #   message(msg)
-    #
-    #   gaps.stress <- cbind.data.frame("getAvailData", "Number of detects", 0, msg)
-    #   colnames(gaps.stress) <- c("fxnname", "condition", "result", "comment")
-    #   gaps <- rbind(gaps, gaps.stress)
-
-    # }
   }
 
   # ID response samples ----

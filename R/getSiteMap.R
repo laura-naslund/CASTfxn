@@ -22,12 +22,11 @@
 #' inside-the-case (comparator) sites in teal, outside-the-case sites in grey,
 #' and both inside/outside the case reference sites outlined in dark blue.
 #'
-#' @param sp_outline Spatial dataframe representing region (or subregion) boundary.
-#' @param sp_flowline Spatial dataframe representing stream reaches *MUST* include
+#' @param sp_outline Spatial object representing region (or subregion) boundary.
+#' @param sp_flowline Spatial object representing stream reaches *MUST* include
 #'                    inside-the-case ID; may include outside-the-case ID.
-#' @param region Region or regulatory organization to which the data apply
-#'               (e.g., AZ, SMC, WA, OR)
-#' @param datum x
+#' @param region analysis region
+#' @param datum datum associated with site coordinates
 #' @param df_sites dataframe containing site data, including both "inside the case"
 #'                 and "outside the case" identifiers.
 #' @param allSites a vector of outside-the-case site identifiers
@@ -307,19 +306,5 @@ getSiteMap <- function(sp_outline,
   tmap::tmap_save(state.map, fn_Map, width = map.width, height = map.height,
                   units = "in", dpi = 600)
   # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-  # TODO
-  # Leaflet Map in Notebook
-  # report_format <- "html"
-  # strFile_out_ext <- paste0(".", report_format)
-  # strFile_out <- paste0(TargetSiteID, "_MAP_leaflet", strFile_out_ext)
-  #
-  # rmarkdown::render(file.path(dir_map_rmd, "Map_Leaflet2.rmd")
-  #                   , output_format = paste0(report_format, "_document")
-  #                   , output_file = strFile_out
-  #                   , output_dir = dir_path
-  #                   , quiet = TRUE)
-
-  # place after static map so can insert static map into report
 
 }

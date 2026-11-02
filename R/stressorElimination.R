@@ -1,12 +1,11 @@
-#' Title
+#' Get initial list of stressors considered
 #'
-#' @param stress_info
-#' @param stress_data
+#' @param stress_info stressor metadata
+#' @param stress_data stressor data
 #'
-#' @return
+#' @return a list with a vector of all stressors initially considered (those with observations and selected by the user)
+#' and a dataframe crosswalking those parameter names and labels
 #' @export
-#'
-#' @examples
 getInitialStressors <- function(stress_info,
                                 stress_data){
 
@@ -28,15 +27,16 @@ return(list(
   df_initialStress = df_initialStress))
 }
 
-#' Report on no stressor-response data
+#' Report on no stressor or response data at the target site
 #'
-#' @param TargetSiteID
-#' @param avail_list
+#' @details distinct from reportNoSiteStressResponse which is run from within the biological community loop.
+#' If this function evaluates noStressors or noResponses to TRUE, the site loop jumps to the next target site.
 #'
-#' @return
+#' @param TargetSiteID target site identifier
+#' @param avail_list output from the function getAvailableDataTypes
+#'
+#' @return a gap statement message if there are no stressor-response data at the target site
 #' @export
-#'
-#' @examples
 reportNoStressResponse<- function(TargetSiteID,
                                   avail_list){
   msg <- NULL
@@ -69,18 +69,16 @@ reportNoStressResponse<- function(TargetSiteID,
               gap_no_sr = gap.statement))
 }
 
-#' Report on no stressor response data for a particular site
+#' Report on no stressor response data for a particular site and biological community
 #'
-#' @param TargetSiteID
-#' @param avail_list
-#' @param data_bioCoOccur
-#' @param meta
-#' @param bioComm
+#' @param TargetSiteID target site identifier
+#' @param avail_list output from the function getAvailableDataTypes
+#' @param data_bioCoOccur paired stressor-response data for the biological community currently analyzed
+#' @param lagdays lag days for stressor-response pairing in the metadata
+#' @param bioComm biological community currently analyzed
 #'
-#' @return
+#' @return gap statement if no paired target site stressor-response data for the current biological community
 #' @export
-#'
-#' @examples
 reportNoSiteStressResponse <- function(TargetSiteID,
                                        avail_list,
                                        data_bioCoOccur,
@@ -134,13 +132,13 @@ reportNoSiteStressResponse <- function(TargetSiteID,
 
 #' Get stressors not measured at a target site
 #'
-#' @param stress_elim
-#' @param bioComm
+#' @param stress_elim stressor elimination list containing initial stressors evaluated
+#' @param data_target paired stressor-response dataset for the current biological community
+#' @param bioComm current biological community
 #'
-#' @return
+#' @return list with a vector of stressors measured at the target site and
+#' a gap statement dataframe for stressors not measured at the target site
 #' @export
-#'
-#' @examples
 getTargetNotMeas <- function(stress_elim,
                              data_target,
                               bioComm){

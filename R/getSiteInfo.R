@@ -14,7 +14,7 @@
 #' Requires packages dplyr, ggplot2, lubridate, tidyr
 #'
 #' @param TargetSiteID site identifier for the site being evaluated (the Target Site)
-#' @param TargetCOMID x
+#' @param TargetCOMID comid for the target site reach
 #' @param df_Sites dataframe containing site data, including "inside the case"
 #' and "outside the case" identifiers. If useBC == TRUE, "outside the case" will
 #' be cluster; if useBC == FALSE, "inside the case" will be cluster.
@@ -22,45 +22,26 @@
 #' at the target site, organized by sample date (rows) and type (columns)
 #' @param biocommlist vector of all biological response communities to be evaluated
 #' @param df_BMIMetrics dataframe containing BMI sample index and metric values
-#' @param BMIIndexGp vector containing one or more BMI indices for display purpose only
+#' @param BMIIndexGp BMI index
 #' @param df_ALGMetrics dataframe containing algae sample index and metric values.
 #' Default is NULL.
-#' @param ALGIndexGp vector containing one or more algal indices for display purpose only
+#' @param ALGIndexGp algal index
 #' @param df_FishMetrics dataframe containing fish sample index and metric values
-#' @param FishIndexGp vector containing one or more fish indices for display purpose only
+#' @param FishIndexGp fish index
 #' @param comp.sites vector containing inside-the-case (comparator) site IDs
 #' @param all.sites vector containing all outside-the-case site IDs
 #' @param IncaseLabel Label for the "inside the case" identifier. Default = NULL.
 #' @param OutcaseLabel Label for the "outside the case" identifier. Default = NULL.
 #' @param useBC TRUE to use biological similarity; FALSE to not use. Default = FALSE.
 #' @param plotvars Colors, fills, shapes, transparencies for each type (target,
-#' not degraded, degraded, inside-the-case, outside-the-case). Default = data_plotvars.
-#' @param refSiteCol Default color outline for reference sites, used for standardization.
-#' Default = refOutline_col.
-#' @param plotdpi Default dpi for plots, used for standardization.
-#' Default = plot_dpi. 600
-#' @param plotH Default height for plots, used for standardization.
-#' Default = plot_H. 6
-#' @param plotW Default width for plots, used for standardization.
-#' Default = plot_W. 8
-#' @param plotunits Default units for plots, used for standardization.
-#' Default = plot_units. "in"
+#' not degraded, degraded, inside-the-case, outside-the-case).
 #' @param dir_photo directory containing all site photos (for every site in the data set).
 #' Default is file.path(getwd(), "Data", "Photos").
-#' @param dir_results Directory containing all results. Default is file.path(getwd(),"Results").
 #' @param dir_sub Subdirectory for outputs from this function. Default = "SiteInfo".
 #' @param boo_plot Boolean value to save plots. Default = TRUE.
 #'
-#' @return A list containing a dataframe of site information (site ID, geographic
-#'         coordinates, waterbody name, county name, reach identifier, cluster
-#'         identifier, and reference site flag); a dataframe of any samples obtained
-#'         from the site location by sample date; a dataframe of bmi response
-#'         indices and metric values; a dataframe of algae response indices and
-#'         metric values; the reach identifier for the target site location; the
-#'         cluster identifier for the target site; and a vector of reference reaches.
-#'         Also outputs graphics depicting background variables by category,
-#'         response indices, and tabular site background data. Creates a subfolder
-#'         for site photos within the directory "~/Results/TargetSiteID/SiteInfo".
+#' @return A list containing a gaps dataframe of gaps encountered in generating the biological index boxplots and site photos.
+#' Writes biological index boxplots and site photos (if available) to SiteInfo folder
 #'
 #' @examples
 #' # None at this time
@@ -80,16 +61,9 @@ getSiteInfo <- function(TargetSiteID,
                         all.sites,
                         IncaseLabel = NULL,
                         OutcaseLabel = NULL,
-                        useBC = FALSE,
                         config = NULL,
                         plotvars,
-                        refSiteCol,
-                        plotdpi,
-                        plotH,
-                        plotW,
-                        plotunits,
-                        dir_photo = file.path(getwd(), "Data", "Photos"),
-                        dir_results = file.path(getwd(), "Results"),
+                        dir_photo = NULL,
                         dir_sub = "SiteInfo",
                         boo_plot = TRUE) {##FUNCTION.START
 
@@ -149,7 +123,6 @@ getSiteInfo <- function(TargetSiteID,
   }
 
   # define pipe
-  `%>%` <- dplyr::`%>%`
   not_all_na <- function(x) {!all(is.na(x))}
   all_na <- function(x) {all(is.na(x))}
   biocommlist <- toupper(biocommlist)
@@ -195,11 +168,6 @@ getSiteInfo <- function(TargetSiteID,
                 plotvars$Size[plotvars$Type == "insideD"]*1.2,
                 plotvars$Size[plotvars$Type == "outsideND"]*1.5,
                 plotvars$Size[plotvars$Type == "outsideD"]*1.2)
-  # bio_size <- c(plotvars$Size[plotvars$Type == "target"]*1.8,
-  #               plotvars$Size[plotvars$Type == "insideND"]*1.5,
-  #               plotvars$Size[plotvars$Type == "insideD"]+0.2,
-  #               plotvars$Size[plotvars$Type == "outsideND"],
-  #               plotvars$Size[plotvars$Type == "outsideD"])
   bio_col <- c(plotvars$Fill[plotvars$Type == "target"],
                plotvars$Fill[plotvars$Type == "outsideND"],
                plotvars$Fill[plotvars$Type == "outsideD"],
@@ -207,28 +175,28 @@ getSiteInfo <- function(TargetSiteID,
                plotvars$Fill[plotvars$Type == "insideD"])
 
   # Details about the site (Lat, Long, RefSiteFlag, COMID, OutcaseCol, IncaseCol)
-  mySiteInfo <- df_Sites %>%
-    dplyr::filter(StationID == TargetSiteID) %>%
-    dplyr::select(Latitude, Longitude, RefSiteFlag, COMID, OutcaseCol, IncaseCol)
+  mySiteInfo <- df_Sites |>
+    dplyr::filter(StationID == TargetSiteID) #|>
+    #dplyr::select(Latitude, Longitude, RefSiteFlag, COMID, OutcaseCol, IncaseCol)
   myIncaseID  <- as.vector(unlist(mySiteInfo$IncaseCol))
   myOutcaseID <- as.vector(unlist(mySiteInfo$OutcaseCol))
 
-  data_refSites <- df_Sites %>%
-    dplyr::filter(RefSiteFlag == 1) %>%
-    dplyr::select(StationID, Latitude, Longitude, RefSiteFlag, COMID,
-                  OutcaseCol, IncaseCol)
+  data_refSites <- df_Sites |>
+    dplyr::filter(RefSiteFlag == 1) #|>
+    #dplyr::select(StationID, Latitude, Longitude, RefSiteFlag, COMID,
+                  #OutcaseCol, IncaseCol)
   myRefSites <- unique(as.vector(unlist(data_refSites$StationID)))
 
   # get sampling info (dates of samples)
-  mySamps <- dplyr::filter(df_SampSummary, StationID == TargetSiteID) %>%
+  mySamps <- dplyr::filter(df_SampSummary, StationID == TargetSiteID) |>
     dplyr::mutate(SampYear = lubridate::year(SampleDate))
   mySampsYears <- sort(as.integer(unique(mySamps$SampYear)))
 
   # ID RespSampleDates & Types ----
-  myRespSampDates <- mySamps %>%
+  myRespSampDates <- mySamps |>
     tidyr::pivot_longer(cols = dplyr::ends_with("SampleID"),
-                        names_to = "SampleType", values_to = "ID") %>%
-    dplyr::mutate(SampleType = sub("SampleID$", "", SampleType)) %>%
+                        names_to = "SampleType", values_to = "ID") |>
+    dplyr::mutate(SampleType = sub("SampleID$", "", SampleType)) |>
     dplyr::select(SampleDate, SampleType)
   myRespSampDates <- myRespSampDates[myRespSampDates$SampleType %in% biocommlist, ]
   myRespSampDates$yLoc <- NA_real_
@@ -237,7 +205,7 @@ getSiteInfo <- function(TargetSiteID,
 
   for (t in seq_along(allRespSampTypes)) {
     type <- allRespSampTypes[t]
-    myRespSampDates <- myRespSampDates %>%
+    myRespSampDates <- myRespSampDates |>
       dplyr::mutate(yLoc = ifelse(SampleType == type, -5*t, yLoc))
   }
 
@@ -279,25 +247,25 @@ getSiteInfo <- function(TargetSiteID,
 
     # LCN 9/23/25 patch to remove dependence on hardcoded data_bmiCoOccur
     if(useBC == TRUE){
-      allBioMetrics <- bioMetricData %>%
+      allBioMetrics <- bioMetricData |>
         dplyr::filter(!(StationID %in% comp.sites))
     } else{
-      allBioMetrics <- bioMetricData %>%
-        dplyr::left_join(df_Sites %>% dplyr::select(StationID, IncaseCol)) %>%
-        #dplyr::filter(is.na(IncaseCol) | IncaseCol != myIncaseID) %>%
-        dplyr::filter(IncaseCol != myIncaseID) %>%
+      allBioMetrics <- bioMetricData |>
+        dplyr::left_join(df_Sites |> dplyr::select(StationID, IncaseCol)) |>
+        #dplyr::filter(is.na(IncaseCol) | IncaseCol != myIncaseID) |>
+        dplyr::filter(IncaseCol != myIncaseID) |>
         dplyr::select(-IncaseCol)
     }
 
     allBioMetrics <- rbind(targetBioMetrics, allBioMetrics)
 
-    allBioMetrics <- allBioMetrics %>%
+    allBioMetrics <- allBioMetrics |>
       dplyr::mutate(Quality = as.character(Quality),
                     Case = "Outside the case")
-    allBioMetrics <- allBioMetrics %>%
+    allBioMetrics <- allBioMetrics |>
       tidyr::pivot_longer(cols = tidyselect::all_of(bioIndexGp),
                           names_to = "Index",
-                          values_to = "Score") %>%
+                          values_to = "Score") |>
       dplyr::mutate(Quality = ifelse(StationID == TargetSiteID, "Target", Quality),
                     Quality = factor(Quality, levels = c("Target",
                                                          "Not degraded",
@@ -313,31 +281,31 @@ getSiteInfo <- function(TargetSiteID,
                                                          "Reference, not degraded",
                                                          "Reference, degraded",
                                                          "Not degraded",
-                                                         "Degraded"))) %>%
+                                                         "Degraded"))) |>
       dplyr::select(StationID, RespSampleID, RespSampleDate, Quality, Index,
                     Score, Case, Samples)
 
     # LCN 9/23/25 patch to remove dependence on hardcoded data_bmiCoOccur
     if(useBC == TRUE){
-      compBioMetrics <- bioMetricData %>%
-        dplyr::filter(StationID %in% comp.sites)%>%
+      compBioMetrics <- bioMetricData |>
+        dplyr::filter(StationID %in% comp.sites)|>
         dplyr::select(StationID, RespSampleID, RespSampleDate, tidyselect::all_of(bioIndexGp),
-                      Quality) %>%
+                      Quality) |>
         dplyr::mutate(Quality = as.character(Quality))
     } else{
-      compBioMetrics <- bioMetricData %>%
-        dplyr::left_join(df_Sites %>% dplyr::select(StationID, IncaseCol)) %>%
-        dplyr::filter(IncaseCol == myIncaseID) %>%
+      compBioMetrics <- bioMetricData |>
+        dplyr::left_join(df_Sites |> dplyr::select(StationID, IncaseCol)) |>
+        dplyr::filter(IncaseCol == myIncaseID) |>
         dplyr::select(StationID, RespSampleID, RespSampleDate, tidyselect::all_of(bioIndexGp),
-                      Quality) %>%
+                      Quality) |>
         dplyr::mutate(Quality = as.character(Quality))
     }
 
 
 
-    compBioMetrics <- compBioMetrics %>%
+    compBioMetrics <- compBioMetrics |>
       tidyr::pivot_longer(cols = tidyselect::all_of(bioIndexGp), names_to = "Index",
-                          values_to = "Score") %>%
+                          values_to = "Score") |>
       dplyr::mutate(Quality = ifelse(StationID == TargetSiteID, "Target", Quality),
                     Quality = factor(Quality, levels = c("Target",
                                                          "Not degraded",
@@ -353,31 +321,10 @@ getSiteInfo <- function(TargetSiteID,
                                                          "Reference, not degraded",
                                                          "Reference, degraded",
                                                          "Not degraded",
-                                                         "Degraded"))) %>%
+                                                         "Degraded"))) |>
       dplyr::select(StationID, RespSampleID, RespSampleDate, Quality, Index,
                     Score, Case, Samples)
 
-    # LCN 3/10/26 commented out because duplicative of the Comparator sample summary table and not strictly a gap
-    # goodBioMetrics <- dplyr::filter(compBioMetrics, Quality=="Not degraded")
-    # badBioMetrics <- dplyr::filter(compBioMetrics, Quality=="Degraded")
-    # myBioMetrics <- dplyr::filter(compBioMetrics, Quality=="Target")
-    #
-    # gap.good <- cbind.data.frame("getSiteInfo", "quality", nrow(goodBioMetrics),
-    #                              "Not degraded comparator samples available.")
-    # colnames(gap.good) <- c("fxnname", "condition", "result", "comment")
-    # gap.bad <- cbind.data.frame("getSiteInfo", "quality", nrow(badBioMetrics),
-    #                             "Degraded comparator samples available.")
-    # colnames(gap.bad) <- c("fxnname", "condition", "result", "comment")
-    # gap.comps <- rbind(gap.good, gap.bad)
-    # rm(gap.good, gap.bad, goodBioMetrics, badBioMetrics)
-    #
-    # # fn.gaps <- paste0(TargetSiteID,"_datagaps.tab")
-    # fn.gaps <- paste0(TargetSiteID,"_datagaps.csv")
-    # fn.gaps <- file.path(dir_results, TargetSiteID, fn.gaps)
-    # # utils::write.table(gap.comps, fn.gaps, append = TRUE, col.names = FALSE,
-    # #                    row.names = FALSE, sep = "\t")
-    # utils::write.table(gap.comps, fn.gaps, append = TRUE, col.names = FALSE,
-    #                    row.names = FALSE, sep = ",")
 
     # ## Plot, Variables, Strings, other Aesthetics
     myBioSamps <- dplyr::filter(mySamps, !is.na(bioSampleID))
@@ -421,7 +368,7 @@ getSiteInfo <- function(TargetSiteID,
                                         size = Samples)) +
       ggplot2::scale_color_manual(values = bio_col, drop = FALSE) +
       ggplot2::scale_fill_manual(values = bio_col, drop = FALSE) +
-      ggplot2::scale_shape_manual(values = bio_shp, drop = FALSE) +
+      ggplot2::scale_shape_manual(values = plotvars$Shape, drop = FALSE) +
       ggplot2::scale_alpha_manual(values = bio_alpha, drop = FALSE) +
       ggplot2::scale_size_manual(values = bio_size, drop = FALSE) +
       ggplot2::labs(title = str_title, subtitle = str_sub, caption = lab.sub,
@@ -467,32 +414,6 @@ getSiteInfo <- function(TargetSiteID,
     message(msg)
   }## IF ~ dir.exists(dir_photo)==TRUE & length(list.files(dir_photo)) > 0 ~ END
 
-  # LCN 3/23/26 commenting out since we removed site photos from the report
-
-  # if (!have.photos) {
-  #   message(paste0("No site photos are available for ", TargetSiteID))
-  #
-  #   gap.statement <- data.frame(
-  #     fxnname = "getSiteInfo",
-  #     condition = "Photos",
-  #     result = "0",
-  #     comment = "Site photos are not available"
-  #   )
-  #
-  #   df_gap <- df_gap |> dplyr::bind_rows(gap.statement)
-
-    # gap.photos <- cbind.data.frame("getSiteInfo", "photos", 0,
-    #                                "Site photos are not available.")
-    # colnames(gap.photos) <- c("fxnname", "condition", "result", "comment")
-
-    # fn.gaps <- paste0(TargetSiteID,"_datagaps.tab")
-    # fn.gaps <- paste0(TargetSiteID,"_datagaps.csv")
-    # fn.gaps <- file.path(dir_results, TargetSiteID, fn.gaps)
-    # # utils::write.table(gap.photos, fn.gaps, append = TRUE, col.names = FALSE,
-    # #             row.names = FALSE, sep = "\t")
-    # utils::write.table(gap.photos, fn.gaps, append = TRUE, col.names = FALSE,
-    #                    row.names = FALSE, sep = ",")
-  #}## IF ~ !have.photos ~ END
 
   message("Completed transferring any available site files.")
 
