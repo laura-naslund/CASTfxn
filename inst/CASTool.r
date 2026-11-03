@@ -567,13 +567,12 @@ for (site in seq_len(nrow(df_targets))) {
     ## 18, getTimeSeq ####
     prog_cnt <- stepProgress(cfg,  paste0(bioComm, "; run time sequence line of evidence"), prog_cnt, prog_n, prog_sleep)
 
-    df_TS_scores <- getTimeSeq(TargetSiteID,
+    df_TS_scores <- getTimeSeq(TargetSiteID  = TargetSiteID,
                                biocomm       = bioComm,
-                               bioindex      = bioIndexGp,
                                df_stress     = list.Stress$data_stress,
-                               df_resp       = currentDataList$data_bioMetrics[currentDataList$data_bioMetrics$StationID == TargetSiteID, ],
-                               df_respinfo   = currentDataList$data_bioMetricsInfo,
                                df_stressinfo = list.StressorMetaData$df_stressorMetadata,
+                               df_resp       = currentDataList$data_bioMetrics,
+                               df_respinfo   = currentDataList$data_bioMetricsInfo,
                                df_paired     = df_PairedStressResp,
                                dir_results   = dir_results,
                                dir_sub       = "_WoE")
