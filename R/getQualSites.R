@@ -23,14 +23,14 @@
 #'
 #' Uses the library dplyr, stringr, tibble, and tidyr.
 #'
-#' @param TargetSiteID Site ID
+#' @param TargetSiteID Target site identifier
 #' @param biocomm Biological community; fish, algae or BMI.  Default = "BMI".
-#' @param df_qual Biological index data for the specified biocomm.
+#' @param df_qual Paired stressor-response data for the relevant biological cmmunity.
 #' @param colBio Name of the column for the biological response index measure.
 #' @param compSites Vector containing "inside the case" site identifiers.
 #' @param allSites Vector containing "outside the case" site identifiers.
 #' @param refSites Vector containing all reference site identifiers.
-#' @param stressors Vector containing
+#' @param stressors Vector containing standard parameter name o stressors measured at the target site
 #' @param dir_results directory for results; Default = file.path(getwd(), "Results").
 #' @param dir_sub Subdirectory for outputs from this function. Default = "SiteInfo".
 #'
@@ -74,9 +74,6 @@ getQualSites <- function(TargetSiteID,
     dir_results = dir_results
     dir_sub = "SiteInfo"
   }
-  #
-  # Define pipe
-  `%>%` <- dplyr::`%>%`
 
   # Initialize gaps df
   df_gap <- data.frame(fxnname = character(), condition = character(), result = character(), comment = character())
@@ -85,39 +82,38 @@ getQualSites <- function(TargetSiteID,
   biocomm <- tolower(biocomm)
 
   # Add reference site, inside case, and outside case flags to samples
-  df_qual <- df_qual %>%
+  df_qual <- df_qual |>
     dplyr::mutate(RefSiteFlag = ifelse(StationID %in% refSites, 1, 0),
                   IncaseYN = ifelse(StationID %in% compSites, 1, 0),
                   OutcaseYN = ifelse(StationID %in% allSites, 1, 0))
 
-  # Get bio samples and chem sample where bio is better than target
+  # Get bio samples and chem sample where bio is better than target (defunct feature)
   # First get max(degraded) index value or, if site isn't degraded, min index value
   target.quals <- as.character(df_qual$Quality[df_qual$StationID == TargetSiteID])
+
   if ("Degraded" %in% target.quals) {
-    qual.targ <- df_qual %>%
-      dplyr::filter(StationID == TargetSiteID & Quality == "Degraded") %>%
+    qual.targ <- df_qual |>
+      dplyr::filter(StationID == TargetSiteID & Quality == "Degraded") |>
       dplyr::summarise(max = max(get(colBio), na.rm = TRUE), .groups = "drop_last")
-      #dplyr::summarise(max := max(dplyr::.data[[colBio]], na.rm = TRUE), .groups = "drop_last")
     qual.targ <- as.numeric(qual.targ$max)
   } else { #
-    qual.targ <- df_qual %>%
-      dplyr::filter(StationID == TargetSiteID) %>%
+    qual.targ <- df_qual |>
+      dplyr::filter(StationID == TargetSiteID) |>
       dplyr::summarise(min = min(get(colBio), na.rm = TRUE), .groups = "drop_last")
-      #dplyr::summarise(min := min(dplyr::.data[[colBio]], na.rm = TRUE), .groups = "drop_last")
     qual.targ <- as.numeric(qual.targ$min)
   }
 
   df_qual[, "BetterThan"] <- ifelse(df_qual[, colBio] >= qual.targ, 1, 0)
 
-  df_qual <- dplyr::select(df_qual, StationID, IncaseCol, OutcaseCol, StressSampleDate,
+  df_qual <- df_qual |> dplyr::select(StationID, IncaseCol, OutcaseCol, StressSampleDate,
                            RespSampleDate, StressSampleID, RespSampleID, BioComm,
                            RefSiteFlag, IncaseYN, OutcaseYN, BetterThan,
                            dplyr::all_of(colBio),
                            Quality, dplyr::all_of(stressors))
 
   # Create dataframe for all possible cases
-  df_qualstats <- df_qual %>%
-    dplyr::filter(StationID != TargetSiteID) %>%
+  df_qualstats <- df_qual |>
+    dplyr::filter(StationID != TargetSiteID) |>
     dplyr::mutate(IncaseSamples = ifelse(IncaseYN == 1, 1, 0),
                   IncaseGood = ifelse((IncaseYN == 1) & (Quality == "Not degraded"),
                                       1, 0),
@@ -135,18 +131,18 @@ getQualSites <- function(TargetSiteID,
                   RefSamplesGood = ifelse((RefSiteFlag == 1) & (Quality == "Not degraded"),
                                           1, 0),
                   RefSamplesBad = ifelse((RefSiteFlag == 1) & (Quality == "Degraded"),
-                                         1, 0)) %>% # ,
+                                         1, 0)) |> # ,
     dplyr::select(IncaseSamples, IncaseGood, IncaseBad, OutcaseSamples, OutcaseGood,
                   OutcaseBad, TotalSamples, TotalSamplesGood, TotalSamplesBad,
                   RefSamples, RefSamplesGood, RefSamplesBad)
 
-  df_qualstats <- df_qualstats %>%
-    dplyr::summarise(dplyr::across(dplyr::where(is.numeric), sum)) %>%
+  df_qualstats <- df_qualstats |>
+    dplyr::summarise(dplyr::across(dplyr::where(is.numeric), sum)) |>
     t()
-  df_qualstats <- as.data.frame(df_qualstats) %>%
-    tibble::rownames_to_column() %>%
+  df_qualstats <- as.data.frame(df_qualstats) |>
+    tibble::rownames_to_column() |>
     dplyr::rename(Label = rowname, Count = V1)
-  df_qualstats <- df_qualstats %>%
+  df_qualstats <- df_qualstats |>
     dplyr::mutate(Quality = dplyr::case_when(stringr::str_detect(Label, "Good") ~ "Not degraded",
                                              stringr::str_detect(Label, "Bad") ~ "Degraded",
                                              TRUE ~ "Total"),
@@ -156,12 +152,12 @@ getQualSites <- function(TargetSiteID,
                                              TRUE ~ "AllSamples"),
                   BioComm = toupper(biocomm))
 
-  df_qualstats <- df_qualstats %>%
-    dplyr::select(-Label) %>%
-    dplyr::group_by(BioComm, Quality) %>%
-    tidyr::pivot_wider(names_from = "Samples", values_from = "Count") %>%
+  df_qualstats <- df_qualstats |>
+    dplyr::select(-Label) |>
+    dplyr::group_by(BioComm, Quality) |>
+    tidyr::pivot_wider(names_from = "Samples", values_from = "Count") |>
     dplyr::select(BioComm, Quality, InsideCaseSamples, OutsideCaseSamples,
-                  AllSamples, ReferenceSamples) %>%
+                  AllSamples, ReferenceSamples) |>
     dplyr::arrange(Quality)
 
   dirSiteInfo <- file.path(dir_results, TargetSiteID, dir_sub)

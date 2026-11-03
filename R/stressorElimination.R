@@ -168,21 +168,23 @@ getTargetNotMeas <- function(stress_elim,
 
 #' Report on stressors with insufficent comparator samples
 #'
-#' @return
-#' @export
+#' @param df_PairedStressResp paired stressor response dataset for current biological community
+#' @param bioIndexGp biological response index for current biological community
+#' @param samplim minimum number of inside the case samples to analyze the stressor
+#' @param bioComm current biological community
+#' @param targMeasStress stressors measured at the target site
 #'
-#' @examples
+#' @return a list with a vector of stressors with insufficient sample numbers and a corresponding gap statement dataframe
+#' @export
 reportInsuffStress <- function(df_PairedStressResp,
-                               list.CompSites,
                                bioIndexGp,
-                               stress_elim,
                                samplim,
                                bioComm,
                                targMeasStress){
 
   # Remove any stressors with fewer than samplim comparator samples
   df_PairedStressResp.stats <- df_PairedStressResp |>
-    dplyr::filter(StationID %in% list.CompSites$comp.sites) |>
+    dplyr::filter(IncaseYN == 1) |>
     dplyr::select(StationID, IncaseCol, OutcaseCol, StressSampleDate,
                   RespSampleDate, StressSampleID, RespSampleID, BioComm,
                   all_of(bioIndexGp), Quality,
@@ -193,11 +195,11 @@ reportInsuffStress <- function(df_PairedStressResp,
     dplyr::group_by(Stressor) |>
     dplyr::summarise(n = dplyr::n(), .groups = "drop_last")
 
-  insuffSamples <- df_PairedStressResp.stats$Stressor[which(df_PairedStressResp.stats$n < samplim)]
+  insuffSamples <- df_PairedStressResp.stats$Stressor[which(df_PairedStressResp.stats$n <= samplim)]
 
   df_suffElim <- data.frame()
   # Write these to data gaps file
-  if (length(insuffSamples) != 0) { # changed 3/10/26 LCN was previously == 0, which is incorrect
+  if (length(insuffSamples) != 0) {
     for (i in seq_along(insuffSamples)) {
       str <- paste(bioComm, insuffSamples[i], sep = ": ")
       msg <- paste0("Insufficient number of paired ", bioComm, " samples are available for ", str, ". This stressor will not be evaluated.")

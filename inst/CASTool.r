@@ -476,9 +476,7 @@ for (site in seq_len(nrow(df_targets))) {
 
     # Remove any stressors with fewer than samplim comparator samples
     list.StressorElim <- reportInsuffStress(df_PairedStressResp = df_PairedStressResp,
-                                           list.CompSites = list.CompSites,
                                            bioIndexGp = bioIndexGp,
-                                           stress_elim = list.StressorElim,
                                            samplim = meta$samplim,
                                            bioComm = bioComm,
                                            targMeasStress = list.StressorElim$targMeasStress) |>
@@ -523,7 +521,6 @@ for (site in seq_len(nrow(df_targets))) {
                                           df_data       = df_PairedStressResp,
                                           detects       = list.StressorElim$stressorMeasSuff,
                                           df_stressinfo = list.Stress$data_stressInfo,
-                                          compsites     = list.CompSites$comp.sites,
                                           biocomm       = bioComm,
                                           colBio        = bioIndexGp,
                                           config        = cfg,
@@ -560,7 +557,7 @@ for (site in seq_len(nrow(df_targets))) {
     }
 
     if (nrow(list.StressorMetaData$df_COscores) != 0) {
-      df_LoE <- list.StressorMetaData$df_COscores
+      df_LoE <- rbind(df_LoE, list.StressorMetaData$df_COscores)
     }
 
     msg <- paste0("getCoOccur for ", bioComm, " is complete.")
