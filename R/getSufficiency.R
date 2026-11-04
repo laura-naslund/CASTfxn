@@ -6,77 +6,33 @@
 #
 #' @title Stressor Sufficiency Line of Evidence
 #'
-#' @description Generates logistic regressions to answer the question:
-#' are stressor levels sufficient to explain the observed impairment?
-#' Also writes a tab-delimited text file containing scores for this line
-#' of evidence.
+#' @description Generates logistic regressions for the sufficiency line of evidence
 #'
-#' @details \strong{Derive Evidence for Stressor Sufficiency from Field
-#' Observational Studies.}
-#'
-#' Stressor-response from field observational studies: Is the level of the
-#' stressor sufficient to explain the level of biological effect observed at
-#' the site?
-#'
-#' Using all comparator sites, fit logistical regression curve of the probability
-#' of poor condition (i.e., poor biological index score) as a function of
-#' stressor level.  Compare stressor levels from test site to levels
-#' corresponding to median (50%) and low (20%) probabilities of observing poor
-#' condition.
-#'
-#' 1. Supports the case for the candidate cause.  Stressor levels at the test
-#' site are above the lower confidence limit  (LCL) corresponding to 50%
-#' probability of observing poor condition
-#'
-#' 0. Indeterminate.  Stressor levels at the test site are between the LCL
-#' corresponding to 50% probability of observing poor condition and the UCL
-#' corresponding to 20% probability of observing poor condition.
-#'
-#' -1. Weakens the case for the candidate cause.  Stressor levels at the test
-#' site are below the upper confidence limit (UCL) corresponding to 20%
-#' probability of observing poor condition.
-#'
-#' Cut function is used to assign narrative categories and degraded status
-#' based on the provided biological score, ensuring criteria are applied the
-#' same across all sites.
-#'
-#' The BioDegLab has to remain as the default values of Yes and No. Other
-#' values will break the code.
-#'
-#' Only a single biological measurement is used. But multiple stressors can be
-#' used.
-#'
-#' Uses the libraries dplyr, ggplot2, grid, stringr, and tidyr.
-#'
-#' @param TargetSiteID ID of station to be evaluated. May have one or many samples.
-#' @param df_data dataframe containing matched stressor-response data for the
-#'                biological response community desired
-#' @param compSites vector containing comparator site IDs
-#' @param df_stressinfo dataframe containing stressor metadata (LogTransf, Label)
-#' @param biocomm Biological community; BMI, algae, or fish  Default = "BMI".
+#' @param TargetSiteID target site identifier
+#' @param df_data paired stressor-response data for the current biological community
+#' @param df_stressinfo  metadata for stressors that passed the co-occurrence screen
+#' @param df_resp biological response metric data for the current biological community
+#' @param df_respinfo biological response metadata for the current biological community
+#' @param biocomm current biological community
 #' @param colBio df_data column name for the field with biological index value.
-#' @param plotvars Standardized sizes, fills, shapes, and transparencies for plots.
-#'                 Defaults to data_plotvars
-#' @param plotdpi Standardized plot dpi. Defaults to plot_dpi. 600
-#' @param plotH Standardized plot height. Defaults to plot_H. 6
-#' @param plotW Standardized plot width. Defaults to plot_W. 8
-#' @param plotunits Standardized plot units. Defaults to plot_units. "in"
-#' @param dir_plots Directory to save plots. Default = working directory and Results.
-#' @param dir_sub Subdirectory for outputs from this function. Default = "Sufficiency"
-#' @param boo_plot Boolean value indicating whether or not to print the plot.
-#'                 Defaults to TRUE.
+#' @param config list containing configuration parameters
+#' @param plotvars standardized sizes, fills, shapes, and transparencies for plots.
+#' @param plotdpi standardized plot dpi. Defaults to plot_dpi. 600
+#' @param plotH standardized plot height. Defaults to plot_H. 6
+#' @param plotW standardized plot width. Defaults to plot_W. 8
+#' @param plotunits standardized plot units. Defaults to plot_units. "in"
+#' @param dir_plots directory to save plots.
+#' @param dir_sub subdirectory for weight of evidence outputs from this function. Default = "_WoE"
+#' @param boo_plot boolean value indicating whether or not to generate the plot. Defaults to TRUE.
+#' @param targetSampleLabels boolean to label target sample values
 #'
-#' @return Writes individual plots as pngs, and a tab-delimited text file with
-#'         scores for the sufficiency line of evidence to a directory:
-#'         "Results/TargetSiteID/BioComm/Sufficiency".
-#'
-#' @examples
-#' # None at this time
+#' @return Writes individual plots as pngs and all sufficiency scores to a csv. Returns sufficiency scores for the biological index.
 #' @export
 getSufficiency <- function(TargetSiteID,
                            df_data,
-                           compSites,
                            df_stressinfo,
+                           df_resp,
+                           df_respinfo,
                            biocomm,
                            colBio,
                            config = NULL,
@@ -85,12 +41,10 @@ getSufficiency <- function(TargetSiteID,
                            plotH = 6,
                            plotW = 8,
                            plotunits = "in",
-                           dir_plots = file.path(getwd(), "Results"),
+                           dir_plots,
                            dir_sub = "_WoE",
                            boo_plot = TRUE,
                            targetSampleLabels = TRUE) {##FUNCTION.START
-
-  `:=` <- data.table::`:=`
 
   # Debug
   boo_DEBUG <- FALSE
@@ -121,10 +75,15 @@ getSufficiency <- function(TargetSiteID,
     boo_plot      <- config$boo_plot
   }
 
-  # define pipe
-  `%>%` <- dplyr::`%>%`
   biocomm <- toupper(biocomm)
-  stressors <- as.vector(df_stressinfo$Stressor)
+
+  # Get stressors
+  stressors <- df_stressinfo$Stressor
+
+  # Get responses with cutoff values
+  responses <- df_respinfo |>
+    dplyr::filter(is.na(CutoffValue) == FALSE) |>
+    dplyr::pull(MetricName)
 
   # Write results directory ----
   out.dir <- dirname(dir_plots)
@@ -156,7 +115,7 @@ getSufficiency <- function(TargetSiteID,
 
   ## Plot, Variables
   ## Prepare colors, sizes, etc  ----
-  plotvarsIn  <- plotvars %>%
+  plotvarsIn  <- plotvars |>
     dplyr::filter(Type %in% c("insideND", "insideD"))
   bio_col     <- rev(unlist(plotvarsIn$Fill)) # Degraded, Not degraded
   bio_fill    <- rev(unlist(plotvarsIn$Fill)) # Degraded, Not degraded
@@ -168,45 +127,30 @@ getSufficiency <- function(TargetSiteID,
   targ_line_lwd <- 0.5
 
   # Get dataset
-  df_data <- df_data %>%
-    dplyr::filter(StationID %in% compSites) %>%
+  df_resp <- df_resp |>  # will need to edit this if df_resp isn't filtered by user selection
+    dplyr::select("StationID", "RespSampleID", "RespSampleDate", dplyr::all_of(responses)) |>
+    tidyr::pivot_longer(cols = all_of(responses), names_to = "Response", values_to = "ResponseValue")
+
+  df_data <- df_data |>
+    dplyr::filter(IncaseYN == 1) |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
-                  RespSampleDate, Quality, dplyr::all_of(colBio),
-                  dplyr::all_of(stressors))
+                  RespSampleDate, Quality, dplyr::all_of(stressors)) |>
+    tidyr::pivot_longer(cols = all_of(stressors), names_to = "Stressor", values_to = "StressorValue") |>
+    dplyr::left_join(df_resp, by = c("StationID", "RespSampleID", "RespSampleDate"))
 
-  df_target <- dplyr::filter(df_data, StationID == TargetSiteID)
-
-  # Transform stressor data as required
-  strInfo <- df_stressinfo %>%
-    dplyr::filter(Stressor %in% stressors) %>%
-    dplyr::select(Stressor, LogTransf, Label)
-
-  # Create Score Output File # add Bio.Nar just before Quality
-  df.scores <- df_data %>%
-    dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
-                  RespSampleDate, dplyr::all_of(colBio), Quality) %>%
-    dplyr::mutate(StressorCode  = as.character(NA),
-                  StressorValue = as.numeric(NA),
-                  n             = as.character(NA),
-                  SRpred_Deg    = as.character(NA),
-                  Sc_SRlog      = as.character(NA),
-                  BioComm       = as.character(NA),
-                  Label         = as.character(NA))
-  # remove all rows
-  df.scores <- df.scores[0, ]
 
   # Calculate quantiles on Comparator Sites
   # Loop, j ####
-  for (j in seq_along(stressors)) { ##FOR.j.START
-    #
-    str <- stressors[j]
-    j.len <- length(stressors)
-    jlog <- as.numeric(strInfo$LogTransf[strInfo$Stressor == str])
-    jlabel <- as.character(strInfo$Label[strInfo$Stressor == str])
+  tot.plot <- length(stressors) * length(responses)
+  plot.count <- 1
 
-    if (jlog == 1) {
-      jlabel <- paste0("Log1p ", jlabel)
-    }
+  suff_score <- NULL
+
+  for (j in seq_along(stressors)) { ##FOR.j.START
+    str <- stressors[j]
+    str_label <- df_stressinfo |>
+      dplyr::filter(Stressor == str) |>
+      dplyr::pull(Label)
 
     # Write graphics directory ----
     out.dir <- dirname(dir_plots)
@@ -223,200 +167,232 @@ getSufficiency <- function(TargetSiteID,
       }
     }
 
-    message(paste0("Processing item (", j, "/", j.len, "); ", str, "\n"))
-    utils::flush.console()
+    for(r in seq_along(responses)){
+      resp <- responses[r]
+      resp_label <- df_respinfo |>
+        dplyr::filter(MetricName == resp) |>
+        dplyr::pull(MetricLabel)
 
-    df.score.j <- df_data %>%
-      dplyr::select(StationID, StressSampleID, StressSampleDate,
-                    RespSampleID, RespSampleDate, Quality,
-                    dplyr::all_of(colBio),
-                    dplyr::all_of(str)) %>%
-      dplyr::filter(StationID == TargetSiteID) %>%
-      tidyr::pivot_longer(cols = dplyr::all_of(str), names_to = "StressorCode",
-                          values_to = "StressorValue")
+      message(paste0("Processing item (", plot.count, "/", tot.plot, "); ", str, ", ", resp, "\n"))
+      utils::flush.console()
 
-    df.plot <- df_data %>%
-      dplyr::select(dplyr::all_of(colBio), Quality, dplyr::all_of(str))
+      plot.count <- plot.count + 1
 
-    df.plot <- df.plot[!is.na(df.plot[, str]), ]
+      df_data_sr <- df_data |>
+        dplyr::filter(Stressor == str, Response == resp) |>
+        tidyr::drop_na()
 
-    if (nrow(df.plot) > 0) { # This uses the dataframe with transformed (if necessary) values
-      df.plot <- df.plot %>%
-        dplyr::rename(y = dplyr::all_of(colBio), x = dplyr::all_of(str)) %>%
-        dplyr::mutate(y.name = ifelse(Quality == "Degraded", 1, 0)) %>%
-        dplyr::select(y, Quality, y.name, x)
-      fit <- stats::glm(y.name ~ x, data = df.plot, family = stats::binomial)
-      useVal <- "normal"
-      j_values <- data.frame(x = df_target[, str])
-      df.plot <- df.plot[stats::complete.cases(df.plot), ]
+      # If the response is not the index, assign quality
+      if(resp != colBio){
+        resp_info <- df_respinfo |>
+          dplyr::filter(MetricName == resp)
+        resp_trend <- resp_info$TrendWIncStress
+        resp_cutoff <- resp_info$CutoffValue
+        resp_inclind <- resp_info$InclusiveIndicator
 
-      #  Stressor Response Curve
-      n_cc_df_plot <- nrow(df.plot[stats::complete.cases(df.plot[, c("x", "y")]),
-                                   c("x", "y")])
-      # create data for curve (type "response" gives probabilities)
-      newdat <- data.frame(x = seq(min(df.plot$x, na.rm = TRUE),
-                                   max(df.plot$x, na.rm = TRUE), len = 100))
-      newdat$y.name <- stats::predict(fit, newdata = newdat, type = "response")
-
-      # Scoring
-      j_SR_predict <- stats::predict(fit, newdata = j_values, type = "response")
-      j_SR_score <- cut(j_SR_predict,
-                        breaks = c(0, 0.2, 0.5, 1),
-                        labels = c(-1, 0, 1))
-      j_SR_score_txt <- ifelse(j_SR_score == "1", "1 (Supporting)",
-                               ifelse(j_SR_score == "0", "0 (Indeterminate)",
-                                      ifelse(j_SR_score == "-1", "-1 (Refuting)", "NA")))
-
-      # plot ####
-      # File Names
-      fn_png_p1 <- paste0(TargetSiteID, "_", make.names(str), "_",
-                          biocomm, "_", colBio, "_SU.png")
-      targ_vals <- as.numeric(unlist(j_values))
-
-      legendtitle <- "Samples"
-      ylabel <- "Relative probability of degraded condition"
-      maintitleSR <- paste0(TargetSiteID, ": Sufficiency (logistic regression) line of evidence")
-      subtitleSR <-"Is the target sample stressor value associated with a higher probability of biological impairment?"
-      subtitleSR <- stringr::str_wrap(subtitleSR, 100)
-
-      captionSR <- paste(paste0("All inside-the-case samples (n=", n_cc_df_plot, ")."),
-                         paste0("Score = ", paste(j_SR_score_txt, collapse = ", "), "."),
-                         sep = "\n")
-
-      # Annotation values
-      # Score = -1 runs from 0 to 0.20 on the y axis
-      # Score = 0 runs from 0.20 to 0.50 on the y axis
-      # Score = 1 runs from 0.50 to 1 on the y axis
-      xmin <- min(df.plot$x, na.rm = TRUE)
-      xmax <- max(df.plot$x, na.rm = TRUE)
-      xseg <- xmax + (0.02 * xmax)
-
-      # Get base info for scores table
-      df.score.j <- df.score.j %>%
-        dplyr::mutate(BioComm = biocomm,
-                      Label = jlabel,
-                      n = nrow(df.plot),
-                      SRpred_Deg = j_SR_predict,
-                      Sc_SRlog = j_SR_score) %>%
-        dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
-                      RespSampleDate, dplyr::all_of(colBio), Quality,
-                      StressorCode,
-                      StressorValue, n, SRpred_Deg, Sc_SRlog, BioComm, Label)
-
-      temp_df <- data.frame(xval = targ_vals, yval = 0.9, labelval = df_target$RespSampleID, case = "Target sample(s)")
-
-      # plot1, ggplot ####
-      p1 <- ggplot2::ggplot(df.plot, ggplot2::aes(x = x, y = y.name)) +
-        ggplot2::geom_point(ggplot2::aes(color = "black", shape = Quality,
-                                         fill = Quality),
-                            alpha = 0.5, size = 2, na.rm = TRUE) +
-        ggplot2::scale_fill_manual(name = legendtitle,
-                                   breaks = c("Degraded", "Not degraded"),
-                                   values = bio_col, drop = FALSE) +
-        ggplot2::scale_color_manual(name = legendtitle,
-                                    breaks = c("Degraded", "Not degraded"),
-                                    values = bio_col, drop = FALSE) +
-        ggplot2::scale_shape_manual(name = legendtitle,
-                                    breaks = c("Degraded", "Not degraded"),
-                                    values = bio_shape, drop = FALSE) +
-        # ggplot2::geom_vline(xintercept = targ_vals, color = targ_line_col,
-        #                     lty = targ_line_lty, lwd = targ_line_lwd,
-        #                     na.rm = TRUE) +
-        ggplot2::geom_vline(data = temp_df, ggplot2::aes(xintercept = xval, lty = case), color = targ_line_col,
-                           lwd = targ_line_lwd,
-                            na.rm = TRUE) +
-        ggplot2::scale_linetype_manual(name = "", values = targ_line_lty)+
-        ggplot2::geom_hline(yintercept = c(0.2, 0.5), color = "black",
-                            lty = 2, na.rm = TRUE) +
-        ggplot2::annotate("segment", y = negStart, yend = negEnd, x = xseg,
-                          color = "orange", linewidth = 0.7, alpha = 0.6,
-                          arrow = grid::arrow(ends = "both", type = "open",
-                                              length = grid::unit(0.2, "cm"))) +
-        ggplot2::annotate("segment", y = negEnd, yend = zeroEnd, x = xseg,
-                          color = "orange", linewidth = 0.7, alpha = 0.6,
-                          arrow = grid::arrow(ends = "both", type = "open",
-                                              length = grid::unit(0.2, "cm"))) +
-        ggplot2::annotate("segment", y = zeroEnd, yend = posEnd, x = xseg,
-                          color = "orange", linewidth = 0.7, alpha = 0.6,
-                          arrow = grid::arrow(ends = "both", type = "open",
-                                              length = grid::unit(0.2, "cm"))) +
-        ggplot2::annotate("text", x = xmax, y = c(midNeg, midZero, midPos),
-                          label = c(aLabNeg, aLabZero, aLabPos), color = "orange") +
-        ggplot2::labs(y = ylabel, x = jlabel) +
-        ggplot2::geom_line(ggplot2::aes(y = y.name, x = x), data = newdat,
-                           color = "black", lwd = 1, na.rm = TRUE)
-
-      # if (grepl("^pH_a", str)) {
-      #   if (pHlimLow >= xmin) {
-      #     p1 <- p1 + ggplot2::geom_vline(ggplot2::aes(xintercept = pHlimLow,
-      #                                                 linetype = "pH lower limit"),
-      #                                    color = "black", lty = 3) +
-      #       ggplot2::scale_linetype_manual(name = "pH lower limit", values = 3)
-      #   }
-      #   if (pHlimHigh <= xmax) {
-      #     p1 <- p1 + ggplot2::geom_vline(ggplot2::aes(xintercept = pHlimLow,
-      #                                                 linetype = "pH upper limit"),
-      #                                    color = "black", lty = 3) +
-      #       ggplot2::scale_linetype_manual(name = "pH upper limit", values = 3)
-      #   }
-      # }
-      # if (grepl("^DO", str) & (DOlim >= xmin)) {
-      #   p1 <- p1 + ggplot2::geom_vline(xintercept = DOlim, color = "black",
-      #                                  lty = 3)
-      # }
-
-      p1 <- p1 + ggplot2::theme_bw() +
-        ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
-                       plot.subtitle = ggplot2::element_text(hjust = 0.5, size = 10)) +
-        ggplot2::labs(title = maintitleSR, subtitle = subtitleSR,
-                      caption = captionSR)
-
-      if(targetSampleLabels == TRUE){
-
-
-        p1 <- p1 +
-          ggrepel::geom_label_repel(data = temp_df, ggplot2::aes(x = xval, y = yval, label = labelval, group = NA), color = targ_line_col,
-                                    size = 8/ggplot2::.pt)
+        df_data_sr <- df_data_sr |>
+          dplyr::select(-Quality) |>
+          dplyr::mutate(Quality = qualityAssign(metric_ind = resp_inclind,
+                                                metric_dir = resp_trend,
+                                                metric_cutval = resp_cutoff,
+                                                metric = ResponseValue))
       }
 
-      if ((boo_plot) == TRUE) {
-        ggplot2::ggsave(filename = file.path(dir_path_stress, fn_png_p1),
-                        plot = p1, dpi = plotdpi, width = plotW, height = plotH,
-                        units = plotunits)
-      }
+      df_target_sr <- df_data_sr |>
+        dplyr::filter(StationID == TargetSiteID) |>
+        dplyr::filter(Stressor == str, Response == resp)
 
-    } ##IF.PLOT.END
+      df.plot <- df_data_sr |>
+        dplyr::rename(y = ResponseValue, x = StressorValue) |>
+        dplyr::mutate(y.name = ifelse(Quality == "Degraded", 1, 0))
 
-    # Write to scores table
-    if (exists("df.scores")) {
-      df.scores <- rbind(df.scores, df.score.j)
-    }
 
-  } ##FOR.j.END
+      if(nrow(df.plot) > 0){
+        fit <- stats::glm(y.name ~ x, data = df.plot, family = stats::binomial)
+
+        j_values <- data.frame(x = df_target_sr$StressorValue)
+
+        #  Stressor Response Curve
+        n_cc_df_plot <- nrow(df.plot)
+
+        # create data for curve (type "response" gives probabilities)
+        newdat <- data.frame(x = seq(min(df.plot$x, na.rm = TRUE),
+                                     max(df.plot$x, na.rm = TRUE), len = 100))
+        newdat$y.name <- stats::predict(fit, newdata = newdat, type = "response")
+
+        # Scoring
+        j_SR_predict <- stats::predict(fit, newdata = j_values, type = "response")
+        j_SR_score <- cut(j_SR_predict,
+                          breaks = c(0, 0.2, 0.5, 1),
+                          labels = c(-1, 0, 1))
+        j_SR_score_txt <- ifelse(j_SR_score == "1", "1 (Supporting)",
+                                 ifelse(j_SR_score == "0", "0 (Indeterminate)",
+                                        ifelse(j_SR_score == "-1", "-1 (Refuting)", "NA")))
+
+        # Plot
+        fn_png_p1 <- paste(TargetSiteID, str, resp, biocomm, "SU.png", sep = "_")
+
+        captionSR <- paste(paste0("All inside-the-case samples (n=", n_cc_df_plot, ")."),
+                           paste0("Score = ", paste(j_SR_score_txt, collapse = ", "), "."),
+                           sep = "\n")
+
+        xmax <- max(df.plot$x, na.rm = TRUE)
+        xseg <- xmax + (0.02 * xmax)
+
+        temp_df <- data.frame(xval = df_target_sr$StressorValue, yval = 0.9, labelval = df_target_sr$RespSampleID, case = "Target sample(s)")
+
+        # plot1, ggplot ####
+        p1 <- ggplot2::ggplot(df.plot, ggplot2::aes(x = x, y = y.name)) +
+          ggplot2::geom_point(ggplot2::aes(color = "black", shape = Quality,
+                                           fill = Quality),
+                              alpha = 0.5, size = 2, na.rm = TRUE) +
+          ggplot2::scale_fill_manual(name = "Samples",
+                                     breaks = c("Degraded", "Not degraded"),
+                                     values = bio_col, drop = FALSE) +
+          ggplot2::scale_color_manual(name = "Samples",
+                                      breaks = c("Degraded", "Not degraded"),
+                                      values = bio_col, drop = FALSE) +
+          ggplot2::scale_shape_manual(name = "Samples",
+                                      breaks = c("Degraded", "Not degraded"),
+                                      values = bio_shape, drop = FALSE) +
+          ggplot2::geom_vline(data = temp_df, ggplot2::aes(xintercept = xval, lty = case), color = targ_line_col,
+                              lwd = targ_line_lwd,
+                              na.rm = TRUE) +
+          ggplot2::scale_linetype_manual(name = "", values = targ_line_lty)+
+          ggplot2::geom_hline(yintercept = c(0.2, 0.5), color = "black",
+                              lty = 2, na.rm = TRUE) +
+          ggplot2::annotate("segment", y = negStart, yend = negEnd, x = xseg,
+                            color = "orange", linewidth = 0.7, alpha = 0.6,
+                            arrow = grid::arrow(ends = "both", type = "open",
+                                                length = grid::unit(0.2, "cm"))) +
+          ggplot2::annotate("segment", y = negEnd, yend = zeroEnd, x = xseg,
+                            color = "orange", linewidth = 0.7, alpha = 0.6,
+                            arrow = grid::arrow(ends = "both", type = "open",
+                                                length = grid::unit(0.2, "cm"))) +
+          ggplot2::annotate("segment", y = zeroEnd, yend = posEnd, x = xseg,
+                            color = "orange", linewidth = 0.7, alpha = 0.6,
+                            arrow = grid::arrow(ends = "both", type = "open",
+                                                length = grid::unit(0.2, "cm"))) +
+          ggplot2::annotate("text", x = xmax, y = c(midNeg, midZero, midPos),
+                            label = c(aLabNeg, aLabZero, aLabPos), color = "orange") +
+          ggplot2::labs(y = "Relative probability of degraded condition", x = str_label) +
+          ggplot2::geom_line(ggplot2::aes(y = y.name, x = x), data = newdat,
+                             color = "black", lwd = 1, na.rm = TRUE) +
+          ggplot2::theme_bw() +
+          ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
+                         plot.subtitle = ggplot2::element_text(hjust = 0.5, size = 10)) +
+          ggplot2::labs(title = paste0(TargetSiteID, ": Sufficiency (logistic regression) line of evidence"),
+                        subtitle = "Is the target sample stressor value associated with a higher probability of biological impairment?",
+                        caption = captionSR)
+
+        if(targetSampleLabels == TRUE){
+          p1 <- p1 +
+            ggrepel::geom_label_repel(data = temp_df, ggplot2::aes(x = xval, y = yval, label = labelval, group = NA), color = targ_line_col,
+                                      size = 8/ggplot2::.pt)
+        }
+
+        if ((boo_plot) == TRUE) {
+          ggplot2::ggsave(filename = file.path(dir_path_stress, fn_png_p1),
+                          plot = p1, dpi = plotdpi, width = plotW, height = plotH,
+                          units = plotunits)
+        }
+
+      } # if nrow(df.plot) > 0
+
+      sr_score <- df_target_sr |>
+        dplyr::mutate(n = n_cc_df_plot,
+               StressLabel = str_label,
+               ResponseLabel = resp_label,
+               SRpred_Deg = j_SR_predict |> round(3),
+               Sc_SRlog = j_SR_score)
+
+      suff_score <- dplyr::bind_rows(suff_score, sr_score)
+
+    } # responses end
+
+  } # stressor end
 
   # Save scores file
-  df.scores <- df.scores %>%
-    dplyr::mutate(SRpred_Deg = round(SRpred_Deg, 3)) %>%
-    dplyr::select(!StressorCode) %>%
-    dplyr::rename(Stressor = Label) %>%
-    dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
-                  RespSampleDate, BioComm, dplyr::all_of(colBio), Quality,
-                  Stressor,
-                  StressorValue, n, SRpred_Deg, Sc_SRlog)
+  fn.scores <- file.path(dir_path, paste0(TargetSiteID, "_", biocomm, "_Suff_Scores.csv"))
+  write.csv(suff_score, file = fn.scores, row.names = FALSE)
 
-  fn.scores <- file.path(dir_path, paste0(TargetSiteID, "_", biocomm,
-                                          "_Suff_Scores.csv"))
-  write.csv(df.scores, file = fn.scores, row.names = FALSE)
-
-  df_SuffScores <- df.scores %>%
-    dplyr::rename(bioComm = BioComm, bioIndex = dplyr::all_of(colBio),
-                  Score = Sc_SRlog) %>%
-    dplyr::mutate(LoE = "Suff", bioIndexName := {{colBio}}) %>%
+  df.scores <- suff_score |>
+    dplyr::filter(Response == colBio) |>
+    dplyr::select(-Stressor) |>
+    dplyr::rename(Score = Sc_SRlog,
+                  Stressor = StressLabel) |>
+    dplyr::mutate(LoE = "Suff",
+                  bioComm = biocomm,
+                  bioIndexName = Response,
+                  bioIndex = ResponseValue,) |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
                   RespSampleDate, bioComm, bioIndexName, bioIndex, Quality,
                   Stressor, StressorValue, LoE, Score)
 
-  return(df_SuffScores)
+  return(df.scores)
 
 }##FUNCTION.END
 
+#' Assign quality to biological metric value
+#'
+#' @param bioIndex.Inc inclusive indicator of quality cutoff for a biological metric (<, >, <=, >=)
+#' @param bioIndex.dir direction of stressor gradient (Inc, Dec)
+#' @param bioIndex.cutval cutoff value for biological metric quality
+#' @param bioIndex metric
+#'
+#' @return
+#' @export
+#'
+#' @examples
+qualityAssign <- function(metric_ind, metric_dir, metric_cutval, metric){
+  if (metric_ind == "\u2264" | metric_ind == "<=") {
+    if (metric_dir == "Dec") {
+      quality <- cut(metric,
+                                     breaks = c(-Inf, metric_cutval, Inf),
+                                     right = TRUE,
+                                     labels = c("Degraded", "Not degraded"))
+    } else {
+      quality <- cut(metric,
+                                     breaks = c(-Inf, metric_cutval, Inf),
+                                     right = TRUE,
+                                     labels = c("Not degraded", "Degraded"))
+    }
+  } else if (metric_ind == "\u2265" | metric_ind == ">=") {
+    if (metric_dir == "Dec") {
+      quality <- cut(metric,
+                                     breaks = c(-Inf, metric_cutval, Inf),
+                                     right = FALSE,
+                                     labels = c("Degraded", "Not degraded"))
+    } else {
+      quality <- cut(metric,
+                                     breaks = c(-Inf, metric_cutval, Inf),
+                                     right = FALSE,
+                                     labels = c("Not degraded", "Degraded"))
+    }
+  } else if (metric_ind == "<") {
+    if (metric_dir == "Dec") {
+      quality <- cut(metric,
+                                     breaks = c(-Inf, metric_cutval, Inf),
+                                     right = FALSE,
+                                     labels = c("Degraded", "Not degraded"))
+    } else {
+      quality <- cut(metric,
+                                     breaks = c(-Inf, metric_cutval, Inf),
+                                     right = FALSE,
+                                     labels = c("Not degraded", "Degraded"))
+    }
+  } else {
+    if (metric_dir == "Dec") {
+      quality <- cut(metric,
+                                     breaks = c(-Inf, metric_cutval, Inf),
+                                     right = TRUE,
+                                     labels = c("Degraded", "Not degraded"))
+    } else {
+      quality <- cut(metric,
+                                     breaks = c(-Inf, metric_cutval, Inf),
+                                     right = TRUE,
+                                     labels = c("Not degraded", "Degraded"))
+    }
+  }
+  return(quality |> as.character())
+}

@@ -39,6 +39,7 @@
 getTimeSeq <- function(TargetSiteID,
                        biocomm,
                        config = NULL,
+                       colBio,
                        df_stress,
                        df_resp,
                        df_respinfo,
@@ -210,7 +211,7 @@ getTimeSeq <- function(TargetSiteID,
                         values_to = "StressorValue") |>
     tidyr::pivot_longer(cols = dplyr::all_of(metrics), names_to = "bioIndexName",
                         values_to = "bioIndex") |>
-    dplyr::filter(bioIndexName == bioindex, !is.na(StressorValue)) |>
+    dplyr::filter(bioIndexName == colBio, !is.na(StressorValue)) |>
     dplyr::mutate(bioComm = biocomm, LoE = "TS", Score = "NE") |>
     dplyr::left_join(df_stressinfo |> dplyr::select(Stressor, Label),
                      by = "Stressor") |>

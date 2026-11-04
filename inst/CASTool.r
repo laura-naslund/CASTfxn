@@ -569,6 +569,8 @@ for (site in seq_len(nrow(df_targets))) {
 
     df_TS_scores <- getTimeSeq(TargetSiteID  = TargetSiteID,
                                biocomm       = bioComm,
+                               config        = cfg,
+                               colBio        = bioIndexGp,
                                df_stress     = list.Stress$data_stress,
                                df_stressinfo = list.StressorMetaData$df_stressorMetadata,
                                df_resp       = currentDataList$data_bioMetrics,
@@ -594,8 +596,9 @@ for (site in seq_len(nrow(df_targets))) {
 
     df_SuffScores <- getSufficiency(TargetSiteID  = TargetSiteID,
                                     df_data       = df_PairedStressResp,
-                                    compSites     = list.CompSites$comp.sites,
                                     df_stressinfo = list.StressorMetaData$df_stressorMetadata,
+                                    df_resp       = currentDataList$data_bioMetrics,
+                                    df_respinfo   = currentDataList$data_bioMetricsInfo,
                                     biocomm       = bioComm,
                                     colBio        = bioIndexGp,
                                     config        = cfg,
@@ -628,7 +631,6 @@ for (site in seq_len(nrow(df_targets))) {
                                              r2_cutoff     = meta$r2_cutoff,
                                              dir_plots     = dir_results,
                                              dir_sub       = "_WoE",
-                                             boo_pred_warn = TRUE,
                                              targetSampleLabels = meta$targetSampleLabels)
 
     df_gradscores <- list.BioStressorResponses$df.scores

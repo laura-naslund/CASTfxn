@@ -7,22 +7,18 @@
 #' @title Biological Stressor-Response Gradient Lines of Evidence
 #'
 #' @description Use linear regression to evaluate stressor-response gradients
-#'              inside the case or outside the case.
-#'
-#' @details Biological (BMI, Algae, or Fish) stressor linear regressions.
+#'              inside the case and outside the case.
 #'
 #' Requires packages dplyr, ggplot2, stringr, tidyr
 #'
-#' @param TargetSiteID Site ID
-#' @param df_stressinfo stressor metadata for stressors considered candidate
-#'                      causes of impairment at the target site
-#' @param df_respinfo Bio metric metadata
-#' @param df_respdata Biological metric data for all response samples
-#' @param df_datapaired dataframe of matched biological response and stressor data.
-#' @param biocomm Biological community; algae or BMI.  Default = "BMI".
-#' @param bioindex Name of the biological index column
-#' @param min_cases Minimum number of paired samples; samplim from CASTool_Metadata
-#'                  Default = samplim.
+#' @param TargetSiteID target site identifier
+#' @param df_stressinfo metadata for stressors that passed the co-occurrence screen
+#' @param df_respinfo biological response metric metadata for the current biological community
+#' @param df_respdata biological response metric data for the current biological community
+#' @param df_datapaired paired stressor-response data for the current biological community
+#' @param biocomm current biological community
+#' @param bioindex name of index for current biological community
+#' @param min_cases minimum number of paired samples to advance stressor through analysis
 #' @param p.val_cutoff p-value cutoff above which the slope is not considered significant
 #'                     Default = 0.05
 #' @param r2_cutoff r2 value below which the relationship has too much variance
@@ -33,20 +29,16 @@
 #' @param plotdpi standardized dpi for all plots
 #' @param plotH standardized height for all plots
 #' @param plotW standardized width for all plots
-#' @param plotunits stardardized units for all plots
-# @param ss Directory to save plots. Default = working directory and Results.
-#' @param dir_sub Subdirectory for outputs from this function. Default = "StressorResponse"
-#' @param dir_plots Directory to save plots. Default = working directory and Results.
-#' @param boo_pred_warn Should warnings for prediction be suppressed. Default = TRUE.
+#' @param plotunits standardized units for all plots
+#' @param dir_sub subdirectory for weight of evidence outputs from this function. Default = "_WoE"
+#' @param dir_plots directory to save plots
 #' @param boo_plot Boolean value to save plots. Default = TRUE.
 #'
-#' @return Writes one or more graphics depicting stressor-response relationships,
-#'         a correlation tile plot, and two tab-delimited text files;
-#'         stressor correlations and scores. Returns a dataframe containing
-#'         target site scores for inside-the-case and outside-the-case.
+#' @return Writes a stressor-response correlation table and table of scores.
+#' Generates linear regression figures for inside and outside of the case
+#' as well as a visual depiction of the correlation table. Returns a list containing
+#' scores for the bioindex and datagaps table.
 #'
-#' @examples
-#' # None at this time
 #' @export
 getBioStressorResponses <- function(TargetSiteID,
                                     df_stressinfo,
@@ -67,11 +59,8 @@ getBioStressorResponses <- function(TargetSiteID,
                                     plotunits,
                                     dir_plots,
                                     dir_sub = "_WoE",
-                                    boo_pred_warn = TRUE,
                                     boo_plot = TRUE,
                                     targetSampleLabels = targetSampleLabels) {##FUNCTION.START
-
-  `:=` <- data.table::`:=`
 
   boo.DEBUG <- FALSE
 
@@ -94,8 +83,8 @@ getBioStressorResponses <- function(TargetSiteID,
     plotunits = plot_units
     dir_plots = dir_plots
     dir_sub = "_WoE"
-    boo_pred_warn = TRUE
     boo_plot = TRUE
+    targetSampleLabels = TRUE
   }
 
   if(is.null(config) == FALSE){
@@ -108,22 +97,10 @@ getBioStressorResponses <- function(TargetSiteID,
     boo_plot      = config$boo_plot
   }
 
-  # Correlation file output header row
-  cn_cor_pref <- c("StationID", "biocomm", "stressName", "stressLabel",
-                   "respName","respLabel", "n", "statistic", "p.value",
-                   "estimate", "r2")
-
   # Definitions ####
   biocomm <- toupper(biocomm)
-  not_all_na <- function(x) {!all(is.na(x))}
-  `%>%` <- dplyr::`%>%`
-
-  # Initialize gap df
-  df_gap <- data.frame(fxnname = character(), condition = character(), result = character(), comment = character())
 
   # Write results directory ----
-  #out.dir <- dirname(dir_plots)
-  #out.folders <- c(out.dir, basename(dir_plots), TargetSiteID, biocomm, dir_sub)
   out.folders <- c(dir_plots, TargetSiteID, biocomm, dir_sub)
 
   for (i in 1:length(out.folders)) {
@@ -138,90 +115,62 @@ getBioStressorResponses <- function(TargetSiteID,
   }
 
   # Plot vars, inside-the-case
-  plotvarsIn  <- plotvars %>%
+  plotvarsIn  <- plotvars |>
     dplyr::filter(Type %in% c("target", "insideND", "insideD"))
-  bio_fill_in    <- rev(unlist(plotvarsIn$Fill)) # Degraded, Not degraded, Target
-  bio_shape_in   <- rev(unlist(plotvarsIn$Shape)) # down triangle, circle, triangle
-  bio_size_in    <- rev(unlist(plotvarsIn$Size)) # Degraded, Not degraded, Target
-  bio_alpha_in   <- rev(unlist(plotvarsIn$Alpha)) # Degraded, Not degraded, Target
+  bio_fill_inside    <- rev(unlist(plotvarsIn$Fill)) # Degraded, Not degraded, Target
+  bio_shape_inside   <- rev(unlist(plotvarsIn$Shape)) # down triangle, circle, triangle
+  bio_size_inside    <- rev(unlist(plotvarsIn$Size)) # Degraded, Not degraded, Target
+  bio_alpha_inside   <- rev(unlist(plotvarsIn$Alpha)) # Degraded, Not degraded, Target
 
   # Plot vars, outside-the-case
-  plotvarsOut  <- plotvars %>%
+  plotvarsOut  <- plotvars |>
     dplyr::filter(Type %in% c("target", "outsideND", "outsideD"))
-  bio_fill_out    <- rev(unlist(plotvarsOut$Fill)) # Degraded, Not degraded, Target
-  bio_shape_out   <- rev(unlist(plotvarsOut$Shape)) # down triangle, circle, triangle
-  bio_size_out    <- rev(unlist(plotvarsOut$Size)) # Degraded, Not degraded, Target
-  bio_alpha_out   <- rev(unlist(plotvarsOut$Alpha)) # Degraded, Not degraded, Target
+  bio_fill_outside    <- rev(unlist(plotvarsOut$Fill)) # Degraded, Not degraded, Target
+  bio_shape_outside   <- rev(unlist(plotvarsOut$Shape)) # down triangle, circle, triangle
+  bio_size_outside    <- rev(unlist(plotvarsOut$Size)) # Degraded, Not degraded, Target
+  bio_alpha_outside   <- rev(unlist(plotvarsOut$Alpha)) # Degraded, Not degraded, Target
 
   # Merge other metrics into paired dataset with transformed stressor values
   df_datapaired <- merge(df_datapaired, df_respdata,
-                       by = c("StationID", "RespSampleID", "RespSampleDate",
-                              bioindex, "Quality"),
-                       all.x = TRUE)
-  df_datapaired <- df_datapaired %>% dplyr::select_if(not_all_na)
+                         by = c("StationID", "RespSampleID", "RespSampleDate",
+                                bioindex, "Quality"),
+                         all.x = TRUE)
+  df_datapaired <- df_datapaired |> dplyr::select_if(not_all_na)
 
   df_SiteData <- df_datapaired[df_datapaired$StationID == TargetSiteID, ]
   df_CompData <- df_datapaired[df_datapaired$IncaseYN == 1, ]
-  df_AllData <- df_datapaired[df_datapaired$OutcaseYN == 1 & df_datapaired$IncaseYN == 0, ]
-  df_AllData_wSite <- unique(rbind(df_SiteData, df_AllData))
-
-  df_CompNotDeg <- df_CompData[df_CompData$Quality == "Not degraded", ]
-  df_AllNotDeg <- df_AllData[df_AllData$Quality == "Not degraded", ]
+  df_NotCompData <- df_datapaired[df_datapaired$OutcaseYN == 1 & df_datapaired$IncaseYN == 0, ]
 
   # Get stressors and responses for looping over
-  stressors <- as.vector(unlist(df_stressinfo$Stressor))
-  BioResp <- as.vector(unlist(df_respinfo$MetricName))
+  stressors <- df_stressinfo$Stressor
+  responses <- df_respinfo$MetricName
 
-  # compare stressors list with stressors in paired dataset
-  stressors <- intersect(stressors, colnames(df_SiteData))
-  BioResp <- intersect(BioResp, colnames(df_SiteData))
-
-  ngraph <- 0
-
-  #p
   p.len <- length(stressors)
-  #q
-  q.len <- length(BioResp)
+  q.len <- length(responses)
 
-  # Create scores dataframe ####
+  # Scores filepath
   fn_scores <- paste0(TargetSiteID, "_", biocomm, "_BG_Scores.csv")
   fp_scores <- file.path(dir_path, fn_scores)
-
-  df.sc.sr <- as.data.frame(cbind("StationID" = as.character(),
-                                  "biocomm" = as.character(),
-                                  "stressName" = as.character(),
-                                  "stressLabel" = as.character(),
-                                  "respName" = as.character(),
-                                  "respLabel" = as.character(),
-                                  "n_site" = as.numeric(),
-                                  "n_comp" = as.numeric(),
-                                  "SRLin_Score_inside" = as.numeric(),
-                                  "n_out" = as.numeric(),
-                                  "SRLin_Score_outside" = as.numeric()))
+  df.sc <- data.frame()
 
   # Initialize df.CorrTable
-  df.CorrTable <- NULL
+  fn_corr <- paste0(TargetSiteID, "_", biocomm, "_BG_InsideCorrs.csv")
+  fp_corr <- file.path(dir_path, fn_corr)
+  df.CorrTable <- data.frame()
+
+  data_gaps <- data.frame()
 
   # FOR.p ####
-  for (p in 1:length(stressors)) {
+  for (p in seq_along(stressors)) {
 
     stressName <- stressors[p]
-    varFlag <- 1
-
-    log.yn <- as.logical(df_stressinfo$LogTransf[df_stressinfo$Stressor == stressName])
-
-    if (log.yn == TRUE) {
-      stressLabel <- as.character(df_stressinfo$Label[df_stressinfo$Stressor == stressName])
-      stressLabel <- paste0("Log1p ", stressLabel)
-    } else {
-      stressLabel <- as.character(df_stressinfo$Label[df_stressinfo$Stressor == stressName])
-    }
+    stressLabel <- df_stressinfo$Label[df_stressinfo$Stressor == stressName]
 
     # Write graphics directory ----
     out.dir <- dirname(dir_plots)
     out.folders <- c(out.dir, basename(dir_plots), TargetSiteID, biocomm, stressName)
 
-    for (f in 1:length(out.folders)) {
+    for (f in seq_along(out.folders)) {
       if (f == 1) {
         dir_path_stress <- file.path(out.folders[f])
       } else {
@@ -233,12 +182,9 @@ getBioStressorResponses <- function(TargetSiteID,
     }
 
     # FOR.q ####
-    for (q in 1:length(BioResp)) {
+    for (q in seq_along(responses)) {
 
-      varFlag <- 1
-      boo_corr <- TRUE
-      boo_all <- TRUE
-      respName <- BioResp[q]
+      respName <- responses[q]
       respLabel <- as.character(df_respinfo$MetricLabel[df_respinfo$MetricName == respName])
       pq <- q.len * (p - 1) + q
       pq.len <- p.len * q.len
@@ -266,999 +212,427 @@ getBioStressorResponses <- function(TargetSiteID,
         exp.dir <- -1
       }
 
-      # Create df_plot_all & QC
-      df_plot_all <- df_AllData %>%
-        dplyr::select(StationID, StressSampleID, RespSampleID, Quality,
-                      RefSiteFlag, dplyr::all_of(stressName), dplyr::all_of(respName))
-      df_plot_all <- df_plot_all[stats::complete.cases(df_plot_all), ]
+      # Subset dataframes to current stressor and response
+      df_SiteData_sr <- df_SiteData |>
+        dplyr::select(RespSampleID, dplyr::all_of(respName), dplyr::all_of(stressName)) |>
+        dplyr::rename(Response = respName, Stressor = stressName) |>
+        dplyr::mutate(Case = "Target sample(s)") |>
+        tidyr::drop_na()
 
-      # QC
-      if ((nrow(df_plot_all) > 0) == FALSE) {
-        gap.statement <- data.frame(
-          fxnname = "getBioStressorResponse",
-          condition = paste(stressName, respName, sep = ":"),
-          result = "0",
-          comment = "No stressor-response data available for any sites in the outside-the-case dataset."
-        )
+      df_CompData_sr <- df_CompData |>
+        dplyr::select(all_of(respName), all_of(stressName), Quality) |>
+        dplyr::rename(Response = respName, Stressor = stressName) |>
+        tidyr::drop_na()
 
-        df_gap <- df_gap |>
-          dplyr::bind_rows(gap.statement)
+      df_NotCompData_sr <- df_NotCompData |>
+        dplyr::select(all_of(respName), all_of(stressName), Quality) |>
+        dplyr::rename(Response = respName, Stressor = stressName) |>
+        tidyr::drop_na()
 
-      } else if (nrow(df_plot_all) < min_cases) {
-        txt.score <- paste0("< ", min_cases, " cases")
-        msg.status <- paste0("Item (", pq, "/", pq.len, "), ", stressName,
-                             " (", p, "/", p.len, "), ", respName, " (", q,
-                             "/", q.len, "); score = ", txt.score)
-        message(msg.status)
+      # Write sample number data gaps
+      gaps_sr <- bioStrRspGaps(df_CompData_sr, df_NotCompData_sr, stressName, respName)
+      data_gaps <- dplyr::bind_rows(data_gaps, gaps_sr$gap)
 
-        gap.statement <- data.frame(
-          fxnname = "getBioStressorResponse",
-          condition = paste0("Number of outside-the-case samples; stressor: ",
-                             stressName,
-                             "; response: ",
-                             respName),
-          result = as.character(nrow(df_plot_all)),
-          comment = txt.score
-        )
+      # Inside figure and score
+      if(gaps_sr$inside_ne == FALSE){
 
-        df_gap <- df_gap |>
-          dplyr::bind_rows(gap.statement)
+        # Scoring
+        score_sr_inside <- bioStrRespScore(df_CompData_sr, "inside",
+                                           p.val_cutoff, r2_cutoff, exp.dir)
 
-        #next # LCN commented out because will not run inside the case even if sufficient number of samples.
-      }
+        sr_inside_mod <- score_sr_inside$model_summary
 
-      df_plot_all_ref <- df_plot_all %>%
-        dplyr::filter(RefSiteFlag == 1) %>%
-        dplyr::select(StationID, StressSampleID, RespSampleID, Quality,
-                      RefSiteFlag, dplyr::all_of(stressName), dplyr::all_of(respName))
-      df_plot_all_ref <- df_plot_all_ref[stats::complete.cases(df_plot_all_ref), ]
+        SRLin_Score_inside <- as.character(sr_inside_mod$score)
 
-      #get all cluster data to plot
-      df_plot_cl <- df_CompData %>%
-        dplyr::select(StationID, StressSampleID, RespSampleID, Quality,
-                      RefSiteFlag, dplyr::all_of(stressName), dplyr::all_of(respName))
-      df_plot_cl <- df_plot_cl[stats::complete.cases(df_plot_cl), ]
+        # Plotting
+        inside_plot <- bioStrRspPlot(score_sr_inside$data, df_SiteData_sr, "inside", stressLabel, respLabel,
+                                     targetSampleLabels, TargetSiteID, sr_inside_mod$caption,
+                                     stressName, respName, plotW, plotH, plotunits, plotdpi)
 
-      #get all cluster reference data
-      df_plot_cl_ref <- df_plot_cl %>%
-        dplyr::filter(RefSiteFlag == 1) %>%
-        dplyr::select(StationID, StressSampleID, RespSampleID, Quality,
-                      RefSiteFlag, dplyr::all_of(stressName), dplyr::all_of(respName))
-      df_plot_cl_ref <- df_plot_cl_ref[stats::complete.cases(df_plot_cl_ref), ]
+        # Correlation
+        corr_gaps <- bioStrRespCorrGaps(df_CompData_sr, stressName, respName)
 
-      #get target site data to plot
-      df_plot_site <- df_SiteData %>%
-        dplyr::select(StationID, StressSampleID, RespSampleID, Quality,
-                      RefSiteFlag, dplyr::all_of(stressName), dplyr::all_of(respName))
-      df_plot_site <- df_plot_site[stats::complete.cases(df_plot_site), ]
+        if(nrow(corr_gaps)==0){
+          df.corr.sr <- data.frame(StationID = TargetSiteID,
+                                   biocomm = biocomm,
+                                   stressName = stressName,
+                                   stressLabel = stressLabel,
+                                   respName = respName,
+                                   respLabel = respLabel,
+                                   n = nrow(df_CompData_sr),
+                                   statistic = sr_inside_mod$tval,
+                                   p.value = sr_inside_mod$pvalue,
+                                   estimate = cor(score_sr_inside$data$Stressor, score_sr_inside$data$Response) |> round(2),
+                                   r2 = sr_inside_mod$r2)
 
-      # Check for missing data and write to data gaps file
-      if ((nrow(df_plot_all_ref) > 0) == FALSE) {
-
-        gap.statement <- data.frame(
-          fxnname = "getBioStressorResponse",
-          condition = paste(stressName, respName, sep = ":"),
-          result = "0",
-          comment = "No stressor-response data available for reference sites in the outside-the-case dataset."
-        )
-
-        df_gap <- df_gap |>
-          dplyr::bind_rows(gap.statement)
-
-      }
-      if ((nrow(df_plot_cl) > 0) == FALSE) { # SHOULD NEVER HAPPEN
-
-        gap.statement <- data.frame(
-          fxnname = "getBioStressorResponse",
-          condition = paste(stressName, respName, sep = ":"),
-          result = "0",
-          comment = "No stressor-response data available for any sites in the inside-the-case dataset."
-        )
-
-        df_gap <- df_gap |>
-          dplyr::bind_rows(gap.statement)
-
-      } else if (nrow(df_plot_cl) < min_cases) {
-        txt.score <- paste0("< ", min_cases, " cases")
-        msg.status <- paste0("Item (", pq, "/", pq.len, "), ", stressName,
-                             " (", p, "/", p.len, "), ", respName, " (", q,
-                             "/", q.len, "); score = ", txt.score)
-        message(msg.status)
-
-        gap.statement <- data.frame(
-          fxnname = "getBioStressorResponse",
-          condition = paste0("Number of inside-the-case samples; stressor: ",
-                             stressName,
-                             "; response: ",
-                             respName),
-          result = as.character(nrow(df_plot_all)),
-          comment = txt.score
-        )
-
-        df_gap <- df_gap |>
-          dplyr::bind_rows(gap.statement)
-
-      }
-      if ((nrow(df_plot_cl_ref) > 0) == FALSE) {
-
-        gap.statement <- data.frame(
-          fxnname = "getBioStressorResponse",
-          condition = paste(stressName, respName, sep = ":"),
-          result = "0",
-          comment = "No stressor-response data available for reference sites in the inside-the-case dataset"
-        )
-
-        df_gap <- df_gap |>
-          dplyr::bind_rows(gap.statement)
-
-      }
-      if ((nrow(df_plot_site) > 0) == FALSE) {
-
-        gap.statement <- data.frame(
-          fxnname = "getBioStressorResponse",
-          condition = paste(stressName, respName, sep = ":"),
-          result = "0",
-          comment = "No stressor-response data available for the target site."
-        )
-
-        df_gap <- df_gap |>
-          dplyr::bind_rows(gap.statement)
-
-      }
-
-      # QC for NA/NAN/Inf
-      if (nrow(df_plot_all) > 0) {
-        df_plot_all[!is.finite(df_plot_all[, stressName]), stressName]         <- NA
-      }
-      if (nrow(df_plot_all_ref) > 0) {
-        df_plot_all_ref[!is.finite(df_plot_all_ref[, stressName]), stressName] <- NA
-      }
-      if (nrow(df_plot_cl) > 0) {
-        df_plot_cl[!is.finite(df_plot_cl[, stressName]), stressName]           <- NA
-      }
-      if (nrow(df_plot_cl_ref) > 0) {
-        df_plot_cl_ref[!is.finite(df_plot_cl_ref[, stressName]), stressName]   <- NA
-      }
-      if (nrow(df_plot_site) > 0) {
-        df_plot_site[!is.finite(df_plot_site[, stressName]), stressName]       <- NA
-      }
-
-      # Cluster
-      # LM and Corr, Cluster ####
-      if (nrow(df_plot_cl[stats::complete.cases(df_plot_cl), ]) > 2) { ##IF~nrow(df_plot_cl)~START
-
-        if (stats::sd(df_plot_cl[, stressName], na.rm = TRUE) == 0) { # Vertical line
-          boo_corr <- FALSE
-
-          gap.statement <- data.frame(
-            fxnname = "getBioStressorResponse",
-            condition = paste(stressName, respName, sep = ":"),
-            result = "0",
-            comment = "Stressor data in the inside-the-case sample set have a standard deviation of zero: all values are equal"
-          )
-
-          df_gap <- df_gap |>
-            dplyr::bind_rows(gap.statement)
-
-        } else if (stats::sd(df_plot_cl[, respName], na.rm = TRUE) == 0) { # Horizontal line
-          boo_corr <- FALSE
-
-          gap.statement <- data.frame(
-            fxnname = "getBioStressorResponse",
-            condition = paste(stressName, respName, sep = ":"),
-            result = "0",
-            comment = "Response data in the inside-the-case sample set have a standard deviation of zero: all values are equal"
-          )
-
-          df_gap <- df_gap |>
-            dplyr::bind_rows(gap.statement)
-
-        } else {  # SD <> 0 along vertical and horizontal
-
-          # 20190228, QC for no data
-          model_cl <- stats::lm(df_plot_cl[, respName] ~ df_plot_cl[, stressName],
-                                na.action = stats::na.exclude) #cluster only
-          if (boo_pred_warn == TRUE) {
-            suppressWarnings(model_cl_pred <- stats::predict(model_cl,
-                                                             interval = "prediction",
-                                                             level = 0.75))
-          } else {
-            model_cl_pred <- stats::predict(model_cl,
-                                            interval = "prediction",
-                                            level = 0.75)
-          }
-          model_cl_val  <- cbind(df_plot_cl, model_cl_pred) #predictions for all cluster values
-          #
-          slope_cl <- signif(summary(model_cl)$coefficients[[2]], 3)
-          intercept_cl <- signif(summary(model_cl)$coefficients[[1]], 3)
-          pval_intercept_cl <- signif(summary(model_cl)$coefficients[[7]], 3)
-          pval_slope_cl <- signif(summary(model_cl)$coefficients[[8]], 3)
-          # r2
-          r_cl <- stats::cor(df_plot_cl[, respName], df_plot_cl[, stressName],
-                             method = "pearson", use = "pairwise.complete.obs")
-          r2_cl <- formatC(r_cl^2, format = "f", digits = 3)
-          n_str_cl <- length(df_plot_cl[, stressName])
-          # Correlation
-          c1S_cl <- (stats::cor.test(df_plot_cl[, respName], df_plot_cl[, stressName],
-                                     method = "pearson", use = "pairwise.complete.obs"))
-          df.corr_cl <- data.frame(cbind(TargetSiteID, biocomm, stressName,
-                                         stressLabel, respName, respLabel,
-                                         c1S_cl$parameter + 1,
-                                         signif(c1S_cl$statistic, 2),
-                                         signif(c1S_cl$p.value, 2),
-                                         signif(c1S_cl$estimate, 2),
-                                         r2_cl))
-          names(df.corr_cl) <- cn_cor_pref
-          pval.corr_cl <- signif(c1S_cl$p.value, 2)
-          #
-          slope.dir_cl <- sign(slope_cl) # 1 = positive, -1 = negative
-          #
-        } # End std dev If eval
-
-      } else { # <=2 rows of data
-        boo_corr <- FALSE
-        n_str_cl <- nrow(df_plot_cl)
-
-        gap.statement <- data.frame(
-          fxnname = "getBioStressorResponse",
-          condition = paste(stressName, respName, sep = ":"),
-          result = "0",
-          comment = "Two or fewer paired stressor-response samples are available for the inside-the-case sample set. Cannot calculate a biological gradient score."
-        )
-
-        df_gap <- df_gap |>
-          dplyr::bind_rows(gap.statement)
-
-      }##IF~nrow(df_plot_cl)~END
-
-      # ALL
-      # LM and Corr, All ####
-      if(nrow(df_plot_all[stats::complete.cases(df_plot_all), ]) > 2) { ##IF~nrow(df_plot_cl)~START
-
-        if(stats::sd(df_plot_all[, stressName], na.rm = TRUE) == 0) { # Vertical line
-          boo_all <- FALSE
-
-          gap.statement <- data.frame(
-            fxnname = "getBioStressorResponse",
-            condition = paste(stressName, respName, sep = ":"),
-            result = "0",
-            comment = "Stressor data in the outside-the-case sample set have a standard deviation of zero: all values are equal"
-          )
-
-          df_gap <- df_gap |>
-            dplyr::bind_rows(gap.statement)
-
-        } else if(stats::sd(df_plot_all[, respName], na.rm = TRUE) == 0) {
-          boo_all <- FALSE
-
-          gap.statement <- data.frame(
-            fxnname = "getBioStressorResponse",
-            condition = paste(stressName, respName, sep = ":"),
-            result = "0",
-            comment = "Response data in the outside-the-case sample set have a standard deviation of zero: all values are equal"
-          )
-
-          df_gap <- df_gap |>
-            dplyr::bind_rows(gap.statement)
-
-        } else {  # SD <> 0
-          # 20190228, QC for no data
-          boo_all <- TRUE
-          model_all <- stats::lm(df_plot_all[, respName] ~ df_plot_all[, stressName],
-                                 na.action = stats::na.exclude) # outside the case
-          if(boo_pred_warn == TRUE){
-            suppressWarnings(model_all_pred <- stats::predict(model_all,
-                                                              interval = "prediction",
-                                                              level = 0.75))
-          } else {
-            model_all_pred <- stats::predict(model_all, interval = "prediction",
-                                             level = 0.75)
-          }
-          model_all_val  <- cbind(df_plot_all, model_all_pred) #predictions for outside the case
-          #
-          slope_all <- signif(summary(model_all)$coefficients[[2]], 3)
-          intercept_all <- signif(summary(model_all)$coefficients[[1]], 3)
-          pval_intercept_all <- signif(summary(model_all)$coefficients[[7]], 3)
-          pval_slope_all <- signif(summary(model_all)$coefficients[[8]], 3)
-          # r2
-          r_all <- stats::cor(df_plot_all[, respName], df_plot_all[, stressName],
-                              method = "pearson", use = "pairwise.complete.obs")
-          r2_all <- formatC(r_all^2, format = "f", digits = 3)
-          n_str_all <- length(df_plot_all[, stressName])
-          # Corelation
-          c1S_all <- (stats::cor.test(df_plot_all[, respName], df_plot_all[, stressName],
-                                      method = "pearson", use = "pairwise.complete.obs"))
-          df.corr_all <- data.frame(cbind(TargetSiteID, biocomm, stressName,
-                                          stressLabel, respName, respLabel,
-                                          c1S_all$parameter + 1,
-                                          signif(c1S_all$statistic, 2),
-                                          signif(c1S_all$p.value, 2),
-                                          signif(c1S_all$estimate, 2),
-                                          r2_all))
-          names(df.corr_all) <- cn_cor_pref
-          pval.corr_all <- signif(c1S_all$p.value, 2)
-
-          slope.dir_all <- sign(slope_all) # 1 = positive, -1 = negative
-
-        } # End std dev If eval statement
-
-      } else { # <=2 samples
-        boo_all <- FALSE
-        n_str_all <- nrow(df_plot_all)
-
-        gap.statement <- data.frame(
-          fxnname = "getBioStressorResponse",
-          condition = paste(stressName, respName, sep = ":"),
-          result = "0",
-          comment = "Two or fewer paired stressor-response samples are available for the inside-the-case sample set. Cannot calculate a biological gradient score."
-        )
-
-        df_gap <- df_gap |>
-          dplyr::bind_rows(gap.statement)
-
-      }##IF~nrow(df_plot_all)~END
-
-      # Corr table output ####
-      # # Create results data frame
-      # ~~~ Check QC of Corr Table at end of code ~~~~
-      if (boo_corr == TRUE) { ##IF~boo_corr~START
-        df.CorrTable <- df.CorrTable |> dplyr::bind_rows(df.corr_cl)
-
-        # if (varFlag == 1) {  #First time through loop
-        #   df.CorrTable <- df.corr_cl
-        # } else {
-        #   df.CorrTable <- rbind(df.CorrTable, df.corr_cl) # if not first iteration then append
-        # } # IF, END
-        # boo.Append    <- TRUE
-        # boo.col.names <- FALSE
-        # if (pq==1) { ##IF~pq~START
-        #   boo.Append    <- !boo.Append
-        #   boo.col.names <- !boo.col.names
-        # } ##IF~pq~END
-        #
-        # fn_corr <- paste0(TargetSiteID, "_", biocomm, "_BG_InsideCorrs.csv")
-        # write.csv(df.CorrTable,
-        #                    file.path(dir_path, fn_corr),
-        #                    quote = FALSE, row.names = FALSE,
-        #                    col.names = boo.col.names, append = boo.Append)
-        pval.corr = signif(c1S_cl$p.value, 2)
-      }##IF~boo_corr~END
-      #
-
-      # Scoring, Inside the Case ####
-      if (nrow(df_plot_site) > 0) { ##IF~nrow(df_plot_site)~END
-        for (f in 1:nrow(df_plot_site)) { ##FOR~f~START
-          # Score, inside the case
-          # Generate scores based on slope, significance value, and r2
-          if (boo_corr == TRUE) { # Cluster data should be scored
-            if ((nrow(df_plot_cl) >= min_cases) &&
-                (abs(pval.corr_cl) <= p.val_cutoff) && (r2_cl >= r2_cutoff)) { ##IF~length~START
-              # print to console p (stressName) and q (respName)
-              if (slope.dir_cl == exp.dir) {
-                #txt.score_cl <- "1"
-                txt.score_cl <- paste0("1 (Supporting): slope has expected sign, R2 >= ", r2_cutoff, ", p-value <= ", p.val_cutoff)
-                sr.score_cl = 1
-              } else if (slope.dir_cl != exp.dir) {
-                #txt.score_cl <- "-1"
-                txt.score_cl <- paste0("-1 (Refuting): slope does not have expected sign, R2 >= ", r2_cutoff, ", p-value <= ", p.val_cutoff)
-                sr.score_cl = -1
-              } else {
-                txt.score_cl <- "inconclusive"
-                sr.score_cl = 0
-              }
-            } else {
-              if(r2_cl < r2_cutoff){
-                text_r2_cl <- paste0("R2 < ", r2_cutoff)
-              } else{
-                text_r2_cl <- paste0("R2 >= ", r2_cutoff)
-              }
-              if(abs(pval.corr_cl) > p.val_cutoff){
-                text_pval_cl <- paste0(", p-value > ", p.val_cutoff)
-              } else{
-                text_pval_cl <- paste0(", p-value <= ", p.val_cutoff)
-              }
-              #txt.score_cl <- "0"
-              txt.score_cl <- paste0("0 (Indeterminate): ", text_r2_cl, text_pval_cl)
-              sr.score_cl = 0
-            }##IF~length~START
-          } else { # <=2 sites in cluster; cannot be scored
-            txt.score_cl <- "NE"
-            sr.score_cl = NA
-          }
-
-          # Score, all
-          if (boo_all == TRUE) {
-            if ((length(df_plot_all) >= min_cases) &&
-                (abs(pval.corr_all) <= p.val_cutoff) && (r2_all >= r2_cutoff)) { ##IF~length~START
-              # print to console p (stressName) and q (respName)
-              if (slope.dir_all == exp.dir) {
-                #txt.score_all <-  "1"
-                txt.score_all <- paste0("1 (Supporting): slope has expected sign, R2 >= ", r2_cutoff, ", p-value <= ", p.val_cutoff)
-                sr.score_all = 1
-              } else if (slope.dir_all != exp.dir) {
-                #txt.score_all <- "-1"
-                txt.score_all <- paste0("-1 (Refuting): slope does not have expected sign, R2 >= ", r2_cutoff, ", p-value <= ", p.val_cutoff)
-                sr.score_all = -1
-              } else {
-                txt.score_all <- "inconclusive"
-                sr.score_all = 0
-              }
-            } else {
-              #txt.score_all <- "0"
-              if(r2_all < r2_cutoff){
-                text_r2_all <- paste0("R2 < ", r2_cutoff)
-              } else{
-                text_r2_all <- paste0("R2 >= ", r2_cutoff)
-              }
-              if(abs(pval.corr_all) > p.val_cutoff){
-                text_pval_all <- paste0(", p-value > ", p.val_cutoff)
-              } else{
-                text_pval_all <- paste0(", p-value <= ", p.val_cutoff)
-              }
-              #txt.score_cl <- "0"
-              txt.score_all <- paste0("0 (Indeterminate): ", text_r2_all, text_pval_all)
-              sr.score_all = 0
-            }##IF~length~START
-          } else { # boo_all == FALSE
-            txt.score_all <- "NE"
-            sr.score_all = NA
-          }
-
-          #
-        } ##FOR~f~END
-        #if (boo.pryr==TRUE) {##IF.boo.pryr.START
-        msg.status <- paste0("Item (", pq, "/", pq.len, "), ", stressName,
-                             " (", p, "/", p.len, "), ", respName, " (",
-                             q, "/", q.len, "); score (outside; inside) = ",
-                             txt.score_all, "; ", txt.score_cl)
-        message(msg.status)
-        #}##IF.boo.pryr.START
-
-        df.temp2 <- as.data.frame(cbind("StationID" = TargetSiteID,
-                                        "biocomm" = biocomm,
-                                        "stressName" = stressName,
-                                        "stressLabel" = stressLabel,
-                                        "respName" = respName,
-                                        "respLabel" = respLabel,
-                                        "n_site" = length(df_plot_site),
-                                        "n_comp" = n_str_cl,
-                                        "SRLin_Score_inside" = sr.score_cl,
-                                        "n_out" = n_str_all,
-                                        "SRLin_Score_outside" = sr.score_all))
-
-        if (p*q == 1) { # First time through this loop
-          df.sc.sr <- df.temp2
-        } else {
-          df.sc.sr <- rbind(df.sc.sr, df.temp2)
+          df.CorrTable <- dplyr::bind_rows(df.CorrTable, df.corr.sr)
+        } else{
+          data_gaps <- dplyr::bind_rows(data_gaps, corr_gaps)
         }
 
-      } else {
-        txt.score_all <- "NE"
-        txt.score_cl <- "NE"
-        sr.score_all <- NA
-        sr.score_cl <- NA
-        msg.status <- paste0("Item (", pq, "/", pq.len, "), ", stressName,
-                             " (", p, "/", p.len, "), ", respName, " (",
-                             q, "/", q.len, "); score (all; cluster) = ",
-                             txt.score_all, "; ", txt.score_cl)
-        message(msg.status)
-      } ##IF~nrow(df_plot_site)~END
-
-
-      # Rename columns to generic "Stressor" and "Response" for easier plotting
-      if(boo_all == TRUE){
-        df_plot_all <- dplyr::rename(df_plot_all, Stressor = {{stressName}},
-                                     Response = {{respName}}) %>%
-          dplyr::select(StationID, Stressor, Response, Quality, RefSiteFlag)
-        xmin_all <- unique(min(df_plot_all$Stressor))
-        xmax_all <- unique(max(df_plot_all$Stressor))
-        df_plot_all_ref <- dplyr::rename(df_plot_all_ref, Stressor = {{stressName}},
-                                         Response = {{respName}}) %>%
-          dplyr::select(StationID, Stressor, Response, Quality, RefSiteFlag)
-        model_all_val <- dplyr::rename(model_all_val, Stressor = {{stressName}},
-                                       Response = {{respName}}) %>%
-          dplyr::select(StationID, Stressor, Response, Quality, lwr, upr)
-
-        boo_plot_ref    <- ifelse(nrow(df_plot_all_ref[!is.na(df_plot_all_ref$Stressor), ]) > 0,
-                                  TRUE, FALSE)
+      } else{
+        SRLin_Score_inside <- "NE"
       }
 
-      if(boo_corr){
-        df_plot_cl <- dplyr::rename(df_plot_cl, Stressor = {{stressName}},
-                                    Response = {{respName}}) %>%
-          dplyr::select(StationID, Stressor, Response, Quality, RefSiteFlag)
-        xmin_cl <- unique(min(df_plot_cl$Stressor))
-        xmax_cl <- unique(max(df_plot_cl$Stressor))
-        df_plot_cl_ref <- dplyr::rename(df_plot_cl_ref, Stressor = {{stressName}},
-                                        Response = {{respName}}) %>%
-          dplyr::select(StationID, Stressor, Response, Quality, RefSiteFlag)
-        model_cl_val <- dplyr::rename(model_cl_val, Stressor = {{stressName}},
-                                      Response = {{respName}}) %>%
-          dplyr::select(StationID, Stressor, Response, Quality, lwr, upr)
-        df_plot_site <- dplyr::rename(df_plot_site, Stressor = {{stressName}},
-                                      Response = {{respName}}) %>%
-          dplyr::select(StationID, Stressor, Response, Quality, RefSiteFlag, RespSampleID)
+      # Outside figure and score
+      if(gaps_sr$outside_ne == FALSE){
 
-        boo_plot_cl     <- ifelse(nrow(df_plot_cl[!is.na(df_plot_cl$Stressor), ]) > 0,
-                                  TRUE, FALSE)
-        boo_plot_cl_ref <- ifelse(nrow(df_plot_cl_ref[!is.na(df_plot_cl_ref$Stressor), ]) > 0,
-                                  TRUE, FALSE)
+        # Scoring
+        score_sr_outside <- bioStrRespScore(df_NotCompData_sr, "outside",
+                                            p.val_cutoff, r2_cutoff, exp.dir)
+
+        SRLin_Score_outside <- as.character(score_sr_outside$model_summary$score)
+
+        # Plotting
+        outside_plot <- bioStrRspPlot(score_sr_outside$data, df_SiteData_sr, "outside", stressLabel, respLabel,
+                                      targetSampleLabels, TargetSiteID, score_sr_outside$model_summary$caption,
+                                      stressName, respName, plotW, plotH, plotunits, plotdpi)
+
+      } else{
+        SRLin_Score_outside <- "NE"
       }
 
+      msg.status <- paste0("Item (", pq, "/", pq.len, "), ", stressName,
+                           " (", p, "/", p.len, "), ", respName, " (", q,
+                           "/", q.len, "); score = ", SRLin_Score_inside, " (inside), ", SRLin_Score_outside, " (outside)")
+      message(msg.status)
 
-      ## Plot, inputs ####
-      boo_plot_targ   <- ifelse(nrow(df_plot_site[!is.na(df_plot_site$Stressor), ]) > 0,
-                                TRUE, FALSE)
+      df.sc.sr <- data.frame(StationID = TargetSiteID,
+                             biocomm = biocomm,
+                             stressName = stressName,
+                             stressLabel = stressLabel,
+                             respName = respName,
+                             respLabel = respLabel,
+                             n_site = nrow(df_SiteData_sr),
+                             n_comp = nrow(df_CompData_sr),
+                             SRLin_Score_inside = SRLin_Score_inside,
+                             n_out = nrow(df_NotCompData_sr),
+                             SRLin_Score_outside = SRLin_Score_outside)
 
-      ## Plot, Variables, Strings
-      str_title <- paste0(TargetSiteID, ": Biological gradient (linear regression) line of evidence")
-      str_subtitle1.in <- "Is there a linear relationship between stressor and biological response from inside the case?\n"
-      str_subtitle1.out <- "Is there a linear relationship between stressor and biological response from outside the case?\n"
-      str_subtitle2 <- "Linear regression with 75th percentile prediction interval"
-      str_subtitle.in <- paste0(str_subtitle1.in, str_subtitle2)
-      str_subtitle.out <- paste0(str_subtitle1.out, str_subtitle2)
-      str_xlab  <- stressLabel
-      str_ylab  <- respLabel
-      # if then for equation
-      if (sum(!is.na(df_plot_cl$Stressor)) > 2 || sum(!is.na(df_plot_cl$Response)) > 2) {
-        ##IF.equation.START
-        str_caption_cl <- paste(paste0("Regression (inside-the-case samples): ",
-                                       "y = ", slope_cl, " x + ", intercept_cl),
-                                paste0("R2 = ", r2_cl),
-                                paste0("p-value = ", pval.corr_cl),
-                                paste0("n = ", n_str_cl),
-                                paste0("\nscore = ", txt.score_cl),
-                                sep = " ~ ")
-      } else {
-        str_caption_cl <- paste0("Regression (inside-the-case samples): ",
-                                 "Fewer than 3 samples.")
-      }##IF.equation.END
-      #
-      if (sum(!is.na(df_plot_all$Stressor)) > 2 || sum(!is.na(df_plot_all$Response)) > 2) {
-        ##IF.equation.START
-        str_caption_all <- paste(paste0("Regression (outside-the-case samples): ",
-                                        "y = ", slope_all, " x + ", intercept_all),
-                                 paste0("R2 = ", r2_all),
-                                 paste0("p-value = ", pval.corr_all),
-                                 paste0("n = ", n_str_all),
-                                 paste0("\nscore = ", txt.score_all),
-                                 sep = " ~ ")
-      } else {
-        str_caption_all <- "Regression (outside-the-case): Fewer than 3 samples."
-      } ##IF.equation.END
-      #
-      qualtext <- "not degraded*"
-      # str_caption_qual <- "*Samples rated not degraded."
-      # str_caption_all <- paste0(str_caption_all, "\n", str_caption_qual)
-      leg_all_ref <- paste0("outside-the-case ", qualtext)
-      # str_caption_cl <- paste0(str_caption_cl, "\n", str_caption_qual)
-      leg_cl_ref <- paste0("inside-the-case ", qualtext)
+      df.sc <- dplyr::bind_rows(df.sc, df.sc.sr)
+    } # response loop end
+  } # stressor loop end
 
-      ## Plot, outside ####
-      boo.Plot <- ifelse(nrow(df_plot_site) == 0, FALSE, TRUE)
-      # skip plot if no data for target site
-      if (boo.Plot == TRUE) { ##IF.boo.Plot.START
-        # ggplot, main
-        if (boo_all & exists("model_all_val") & exists("df_plot_all")) {
-          # Linear model (all data)
-          p_SR_all <- ggplot2::ggplot() +
-            ggplot2::geom_smooth(data = model_all_val,
-                                 ggplot2::aes(x = Stressor, y = Response),
-                                 method = stats::lm,
-                                 color = "black",
-                                 fill = "black",
-                                 alpha = 0.2,
-                                 formula = y ~ x, # Added to avoid message
-                                 show.legend = FALSE,
-                                 na.rm = TRUE)
-          p_SR_all <- p_SR_all +
-            ggplot2::geom_line(data = model_all_val,
-                               ggplot2::aes(x = Stressor, y = lwr),
-                               color = "black",
-                               linetype = "dashed",
-                               show.legend = FALSE,
-                               na.rm = TRUE)
-          p_SR_all <- p_SR_all +
-            ggplot2::geom_line(data = model_all_val,
-                               ggplot2::aes(x = Stressor, y = upr),
-                               color = "black",
-                               linetype = "dashed",
-                               show.legend = FALSE,
-                               na.rm = TRUE)
-          p_SR_all <- p_SR_all +
-            ggplot2::geom_point(data = df_plot_all,
-                                ggplot2::aes(x = Stressor, y = Response,
-                                             color = Quality, fill = Quality,
-                                             shape = Quality), alpha = 0.5,
-                                na.rm = TRUE) +
-            ggplot2::scale_fill_manual(name = "Quality",
-                                       breaks = c("Degraded", "Not degraded"),
-                                       values = bio_fill_out, drop = FALSE) +
-            ggplot2::scale_color_manual(name = "Quality",
-                                        breaks = c("Degraded", "Not degraded"),
-                                        values = bio_fill_out, drop = FALSE) +
-            ggplot2::scale_shape_manual(name = "Quality",
-                                        breaks = c("Degraded", "Not degraded"),
-                                        values = bio_shape_out, drop = FALSE)
+  bioStrCorrPlot(TargetSiteID, df.CorrTable, dir_path, plotW, plotH, plotunits, plotdpi)
 
+  write.csv(df.CorrTable, fp_corr, row.names = FALSE)
+  write.csv(df.sc, fp_scores, row.names = FALSE)
 
-        # ggplot, point subsets
-        # if (boo_plot_ref == TRUE) { ##IF~boo_plot_ref~START
-        #   p_SR_all <- p_SR_all +
-        #     ggplot2::geom_point(data = df_plot_all_ref,
-        #                         ggplot2::aes(x = Stressor, y = Response,
-        #                                      fill = Quality, shape = Quality),
-        #                         color = refOutline, alpha = 0.5, na.rm = TRUE)
-        # } else {
-        #   p_SR_all <- p_SR_all +
-        #     ggplot2::geom_blank(ggplot2::aes(color = ref_Outline))
-        # } ##IF~boo_plot_ref~END
-        #
-        if (boo_plot_targ == TRUE) { ##IF~boo_plot_targ~START
-
-          if(targetSampleLabels == TRUE){
-            p_SR_all <- p_SR_all +
-              # ggplot2::geom_point(data=df_plot_site|>
-              #                       dplyr::mutate(Case = "Target sample(s)"),
-              #                     ggplot2::aes(x = Stressor, y = Response),
-              #                     color = "black", shape = bio_shape_out[3],
-              #                     fill = bio_fill_out[3], size = bio_size_out[3]*1.5,
-              #                     na.rm = TRUE)+
-              ggplot2::geom_point(data=df_plot_site|>
-                                    dplyr::mutate(Case = "Target sample(s)"),
-                                  ggplot2::aes(x = Stressor, y = Response, size = Case),
-                                  color = "black", shape = bio_shape_out[3],
-                                  fill = bio_fill_out[3],
-                                  na.rm = TRUE)+
-              ggplot2::scale_size_manual(name = "", values = bio_size_out[3]*1.5)+
-              ggrepel::geom_label_repel(data = df_plot_site,
-                                        ggplot2::aes(x = Stressor, y = Response, label = RespSampleID), color = bio_fill_out[3],
-                                        size = 8/ggplot2::.pt)
-          } else{
-            p_SR_all <- p_SR_all +
-              ggplot2::geom_point(data=df_plot_site|>
-                                    dplyr::mutate(Case = "Target sample(s)"),
-                                  ggplot2::aes(x = Stressor, y = Response, size = Case),
-                                  color = "black", shape = bio_shape_out[3],
-                                  fill = bio_fill_out[3],
-                                  na.rm = TRUE)+
-              ggplot2::scale_size_manual(name = "", values = bio_size_out[3]*1.5)
-          }
-        } else {
-          p_SR_all <- p_SR_all +
-            ggplot2::geom_blank(ggplot2::aes(color = bio_fill_out[3],
-                                             shape = bio_shape_out[3],
-                                             fill = bio_fill_out[3]))
-        } ##IF~boo_plot_targ~END
-
-        # if (grepl("^pH_a", stressName)) {
-        #   if (pHlimLow >= xmin_all) {
-        #     p_SR_all <- p_SR_all +
-        #       ggplot2::geom_vline(ggplot2::aes(xintercept = pHlimLow,
-        #                                        linetype = "pH lower limit"),
-        #                           color = "black", lty = 3)
-        #   }
-        #   if (pHlimHigh <= xmax_all) {
-        #     p_SR_all <- p_SR_all +
-        #       ggplot2::geom_vline(ggplot2::aes(xintercept = pHlimHigh,
-        #                                        linetype = "pH upper limit"),
-        #                           color = "black", lty = 3)
-        #   }
-        # }
-        # if (grepl("^DO", stressName) & (DOlim >= xmin_all)) {
-        #   p_SR_all <- p_SR_all +
-        #     ggplot2::geom_vline(xintercept = DOlim, color = "black", lty = 3)
-        # }
-
-        # other
-        p_SR_all <- p_SR_all +
-          ggplot2::theme_bw() +
-          ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = 12),
-                         plot.subtitle = ggplot2::element_text(hjust = 0.5, size = 10),
-                         plot.caption = ggplot2::element_text(size = 8),
-                         legend.title = ggplot2::element_text(size = 10),
-                         legend.text = ggplot2::element_text(size = 8),
-                         axis.title = ggplot2::element_text(size = 10)) +
-          ggplot2::labs(title = str_title, subtitle = str_subtitle.out,
-                        caption = str_caption_all, x = str_xlab, y = str_ylab)
-
-        # Write biological gradient for all sites
-        fn_png_out <- paste0(TargetSiteID, "_", make.names(stressName), "_",
-                             biocomm, "_", make.names(respName), "_GO.png")
-        fn_png_out <- file.path(dir_path_stress, fn_png_out)
-
-        if (boo_plot) {
-          ggplot2::ggsave(fn_png_out, p_SR_all, width = plotW, height = plotH,
-                          units = plotunits, dpi = plotdpi)
-        } ## IF ~ boo_plot ~ END
-
-      } #END outside regression and points
-
-        ## Plot, inside ####
-        if (boo_corr & boo_plot_cl == TRUE) { ##IF~boo_plot_cl~START
-          # Regression, cluster
-          if (exists("model_cl_val") & exists("df_plot_cl")) {
-            # Linear model (cluster)
-            p_SR_cl <- ggplot2::ggplot() +
-              ggplot2::geom_smooth(data = model_cl_val,
-                                   ggplot2::aes(x = Stressor, y = Response),
-                                   method = stats::lm,
-                                   color = "black",
-                                   fill = "black",
-                                   alpha = 0.2,
-                                   formula = y ~ x, # Added to avoid message
-                                   show.legend = FALSE,
-                                   na.rm = TRUE)
-            p_SR_cl <- p_SR_cl +
-              ggplot2::geom_line(data = model_cl_val,
-                                 ggplot2::aes(x = Stressor, y = lwr),
-                                 color = "black",
-                                 linetype = "dashed",
-                                 show.legend = FALSE,
-                                 na.rm = TRUE)
-            p_SR_cl <- p_SR_cl +
-              ggplot2::geom_line(data = model_cl_val,
-                                 ggplot2::aes(x = Stressor, y = upr),
-                                 color = "black",
-                                 linetype = "dashed",
-                                 show.legend = FALSE,
-                                 na.rm = TRUE)
-            p_SR_cl <- p_SR_cl +
-              ggplot2::geom_point(data = df_plot_cl,
-                                  ggplot2::aes(x = Stressor, y = Response,
-                                               color = Quality, fill = Quality,
-                                               shape = Quality), alpha = 0.5,
-                                  na.rm = TRUE) +
-              ggplot2::scale_fill_manual(name = "Quality",
-                                         breaks = c("Degraded", "Not degraded"),
-                                         values = bio_fill_in, drop = FALSE) +
-              ggplot2::scale_color_manual(name = "Quality",
-                                          breaks = c("Degraded", "Not degraded"),
-                                          values = bio_fill_in, drop = FALSE) +
-              ggplot2::scale_shape_manual(name = "Quality",
-                                          breaks = c("Degraded", "Not degraded"),
-                                          values = bio_shape_in, drop = FALSE)
-          } #END regression and points
-          #
-          # if (boo_plot_cl_ref == TRUE) { ##IF~boo_plot_cl_ref~START
-          #   p_SR_cl <- p_SR_cl +
-          #     ggplot2::geom_point(data = df_plot_cl_ref,
-          #                         ggplot2::aes(x = Stressor, y = Response,
-          #                                      fill = Quality, shape = Quality),
-          #                         color = refOutline, alpha = 0.5, na.rm = TRUE)
-          # } else {
-          #   p_SR_cl <- p_SR_cl +
-          #     ggplot2::geom_blank(ggplot2::aes(color = ref_Outline))
-          # } ##IF~boo_plot_cl_ref~END
-          #
-          if (boo_plot_targ == TRUE) { ##IF~boo_plot_targ~START
-
-            if(targetSampleLabels == TRUE){
-              p_SR_cl <- p_SR_cl +
-                ggplot2::geom_point(data=df_plot_site|>
-                                      dplyr::mutate(Case = "Target sample(s)"),
-                                    ggplot2::aes(x = Stressor, y = Response, size = Case),
-                                    color = "black", shape = bio_shape_out[3],
-                                    fill = bio_fill_out[3],
-                                    na.rm = TRUE)+
-                ggplot2::scale_size_manual(name = "", values = bio_size_out[3]*1.5)+
-              ggrepel::geom_label_repel(data = df_plot_site,
-                                        ggplot2::aes(x = Stressor, y = Response, label = RespSampleID), color = bio_fill_out[3],
-                                        size = 8/ggplot2::.pt)
-            } else{
-              p_SR_cl <- p_SR_cl +
-                ggplot2::geom_point(data=df_plot_site|>
-                                      dplyr::mutate(Case = "Target sample(s)"),
-                                    ggplot2::aes(x = Stressor, y = Response, size = Case),
-                                    color = "black", shape = bio_shape_out[3],
-                                    fill = bio_fill_out[3],
-                                    na.rm = TRUE)+
-                ggplot2::scale_size_manual(name = "", values = bio_size_out[3]*1.5)
-            }
-
-          } else {
-            p_SR_cl <- p_SR_cl +
-              ggplot2::geom_blank(ggplot2::aes(color = "black",
-                                               shape = bio_shape_in[3],
-                                               fill = bio_fill_in[3]))
-          } ##IF~boo_plot_targ~END
-
-          # if (grepl("^pH_a", stressName)) {
-          #   if (pHlimLow >= xmin_cl) {
-          #     p_SR_cl <- p_SR_cl +
-          #       ggplot2::geom_vline(ggplot2::aes(xintercept = pHlimLow,
-          #                                        linetype = "pH lower limit"),
-          #                           color = "black", lty = 3)
-          #   }
-          #   if (pHlimHigh <= xmax_cl) {
-          #     p_SR_cl <- p_SR_cl +
-          #       ggplot2::geom_vline(ggplot2::aes(xintercept = pHlimHigh,
-          #                                        linetype = "pH upper limit"),
-          #                           color = "black", lty = 3)
-          #   }
-          # }
-          # if (grepl("^DO", stressName) & (DOlim >= xmin_cl)) {
-          #   p_SR_cl <- p_SR_cl +
-          #     ggplot2::geom_vline(xintercept = DOlim, color = "black", lty = 3)
-          # }
-
-          # other
-          p_SR_cl <- p_SR_cl +
-            ggplot2::theme_bw() +
-            ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = 12),
-                           plot.subtitle = ggplot2::element_text(hjust = 0.5, size = 10),
-                           plot.caption = ggplot2::element_text(size = 8),
-                           legend.title = ggplot2::element_text(size = 10),
-                           legend.text = ggplot2::element_text(size = 8),
-                           axis.title = ggplot2::element_text(size = 10)) +
-            ggplot2::labs(title = str_title, subtitle = str_subtitle.in,
-                          caption = str_caption_cl, x = str_xlab, y = str_ylab)
-          #
-          # Write biological gradient for all sites
-          fn_png_in <- paste0(TargetSiteID, "_", make.names(stressName), "_",
-                               biocomm, "_", make.names(respName), "_GI.png")
-          fn_png_in <- file.path(dir_path_stress, fn_png_in)
-
-          if (boo_plot) {
-            ggplot2::ggsave(fn_png_in, p_SR_cl, width = plotW, height = plotH,
-                            units = plotunits, dpi = plotdpi)
-            ngraph = ngraph + 1
-          } ## IF ~ boo_plot ~ END
-
-        } ##IF.boo.Plot.END
-
-      } ##IF.boo.plot.TRUE.END
-
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      varFlag <- 0
-
-    } ##FOR.q.END
-
-  } ##FOR.p.END
-
-  # Write InsideCorrs table
-  fn_corr <- paste0(TargetSiteID, "_", biocomm, "_BG_InsideCorrs.csv")
-  write.csv(df.CorrTable,
-            file.path(dir_path, fn_corr),
-            quote = FALSE, row.names = FALSE)
-
-  ## Finalize scores dataframe ####
-  # Change NA values to "NE"
-  df.sc.sr$SRLin_Score_outside <- ifelse(!is.na(df.sc.sr$SRLin_Score_outside),
-                                         as.character(df.sc.sr$SRLin_Score_outside),
-                                         "NE")
-  df.sc.sr$SRLin_Score_inside <- ifelse(!is.na(df.sc.sr$SRLin_Score_inside),
-                                        as.character(df.sc.sr$SRLin_Score_inside),
-                                        "NE")
-
-  # Pivot longer site data before merging with df.sc.sr
-  df_SiteDataStrLong <- df_SiteData %>%
-    dplyr::select(StationID, StressSampleID, StressSampleDate,
-                  RespSampleID, RespSampleDate, dplyr::all_of(stressors)) %>%
-    tidyr::pivot_longer(cols = c(dplyr::all_of(stressors)),
-                        names_to = "stressName",
-                        values_to = "stressVal")
-  df_SiteDataRespLong <- df_SiteData %>%
+  df_SiteData_join <- df_SiteData |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
-                  RespSampleDate, dplyr::all_of(BioResp), Quality) %>%
-    tidyr::pivot_longer(cols = c(dplyr::all_of(BioResp)), names_to = "respName",
-                        values_to = "respVal")
-  df_SiteDataLong <- merge(df_SiteDataStrLong, df_SiteDataRespLong,
-                           by = c("StationID", "StressSampleID",
-                                  "StressSampleDate", "RespSampleID",
-                                  "RespSampleDate"))
-  rm(df_SiteDataStrLong, df_SiteDataRespLong)
+                  RespSampleDate, BioComm, Quality, dplyr::all_of(stressors), dplyr::all_of(bioindex)) |>
+    tidyr::pivot_longer(cols = all_of(stressors), names_to = "Stressor", values_to = "StressorValue") |>
+    tidyr::pivot_longer(cols = all_of(bioindex), names_to = "bioIndexName", values_to = "bioIndex")
 
-  # Merge site data with df.sc.sr
-  df.sc.sr <- merge(df_SiteDataLong, df.sc.sr,
-                    by = c("StationID", "stressName", "respName"),
-                    all.x = TRUE)
-  df.sc.sr <- df.sc.sr %>%
-    # dplyr::mutate(SRLin_Score_inside = ifelse(is.na(stressVal),
-    #                                           "NE", SRLin_Score_inside),
-    #               SRLin_Score_outside = ifelse(is.na(stressVal),
-    #                                            "NE", SRLin_Score_outside)) %>%
-    dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
-                  RespSampleDate, biocomm, stressName, stressLabel, stressVal,
-                  respName, respLabel, respVal, Quality, n_site, n_comp,
-                  SRLin_Score_inside, SRLin_Score_outside)
-
-  ## Write Scores ####
-  write.csv(df.sc.sr, fp_scores, quote = FALSE, row.names = FALSE)
-
-  ## END LR plots ####
-  #
-  # CorrPlot ####
-  ## read
-  if (boo_corr==TRUE) {
-    fn_corr <- paste0(TargetSiteID, "_", biocomm, "_BG_InsideCorrs.csv")
-    fp_corr <- file.path(dir_path, fn_corr)
-
-    if (file.exists(fp_corr)==TRUE) {
-      df_corr <- read.csv(fp_corr)
-
-      # Columns: c("StationID", "biocomm", "stressName", "respName",
-      # "n", "statistic", "p.value", "estimate", "r2")
-      cn_cor_x    <- colnames(df_corr)
-      cn_cor_match <- sum(cn_cor_x %in% cn_cor_pref)
-      if (cn_cor_match != length(cn_cor_pref)) { ##IF~length~START
-        df_corr <- read.csv(fp_corr, header = FALSE, col.names = cn_cor_pref)
-        write.csv(df_corr, fp_corr, quote = FALSE, row.names = FALSE)
-      } ##IF~length~END
-
-      df_corr <- unique(df_corr) %>% dplyr::rename(Estimate = estimate)
-
-      # Plot, Variables, Strings
-      str_title <- paste0(TargetSiteID, ": Stressor-Response Correlations")
-      str_ylab  <- "Stressors"
-      str_xlab  <- "Responses"
-      wrap_length <- 28
-      # Create plot
-      # p_cp <- ggplot2::ggplot(df_corr, ggplot2::aes(x = stringr::str_wrap(respLabel, wrap_length),
-      #                                  y = stringr::str_wrap(stressLabel, wrap_length),
-      #                                  fill = Estimate)) +
-      #   ggplot2::geom_tile(color = "black", lwd = 1, linetype = 1) +
-      #   ggplot2::geom_text(ggplot2::aes(label = Estimate), color = "black", size = 2.25) +
-      #   ggplot2::scale_fill_gradient2(low = "blue", high = "red", midpoint = 0,
-      #                                 limits = c(-1, 1), guide = "colorbar") +
-      #   ggplot2::coord_flip() +
-      #   ggplot2::theme_bw() +
-      #   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = 12),
-      #                  legend.title = ggplot2::element_text(size = 8),
-      #                  legend.text = ggplot2::element_text(size = 6),
-      #                  axis.title = ggplot2::element_text(size = 10),
-      #                  axis.text.x = ggplot2::element_text(size = 5, angle = 45,
-      #                                                      hjust = 1),
-      #                  axis.text.y = ggplot2::element_text(size = 5, angle = 30)) +
-      #   ggplot2::labs(title = str_title, x = str_xlab, y = str_ylab)
-
-      p_cp <- ggplot2::ggplot(df_corr, ggplot2::aes(x = stringr::str_wrap(respLabel, wrap_length),
-                                                    y = stringr::str_wrap(stressLabel, wrap_length),
-                                                    fill = Estimate)) +
-        ggplot2::geom_tile(color = "black", lwd = 1, linetype = 1) +
-        ggplot2::geom_text(ggplot2::aes(label = Estimate), color = "black", size = 2.5) +
-        ggplot2::scale_fill_gradient2(low = "blue", high = "red", midpoint = 0,
-                                      limits = c(-1, 1), guide = "colorbar") +
-        ggplot2::coord_flip() +
-        ggplot2::theme_bw() +
-        ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = ggplot2::rel(1.3)),
-                       legend.title = ggplot2::element_text(size = ggplot2::rel(1)),
-                       legend.text = ggplot2::element_text(size = ggplot2::rel(0.8)),
-                       axis.title = ggplot2::element_text(size = ggplot2::rel(1.3)),
-                       axis.text.x = ggplot2::element_text(color = "black", size = ggplot2::rel(1), angle = 45,
-                                                           hjust = 1),
-                       axis.text.y = ggplot2::element_text(color = "black", size = ggplot2::rel(1), angle = 30)) +
-        ggplot2::labs(title = str_title, x = str_xlab, y = str_ylab)
-
-      # Save correlation plot
-      fn_png_cp <- file.path(dir_path,
-                             paste0(TargetSiteID, "_", biocomm, "_InsideCorrPlot.png"))
-      ggplot2::ggsave(fn_png_cp, p_cp, width = plotH, height = plotW,
-                      units = plotunits, dpi = plotdpi)
-
-      msg.corr <- "Printing correlation plot."
-      message(msg.corr)
-    } ## END Read corr file
-  } ## END create corrplot
-
-  # Scores ----
-  # df.scores <- utils::read.delim(fp_scores, header = TRUE, na.strings = c("", "NA"),
-  #                         strip.white = TRUE, stringsAsFactors = FALSE)
-  #
-  df.scores <- df.sc.sr %>%
-    dplyr::filter(respName == bioindex) %>%
-    dplyr::rename(bioComm = biocomm, bioIndex = respVal, Stressor = stressLabel,
-                  StressorValue = stressVal) %>%
-    tidyr::pivot_longer(cols = dplyr::starts_with("SR"), names_to = "LoE",
-                        values_to = "Score")  %>%
-    dplyr::mutate(LoE = ifelse(LoE == "SRLin_Score_inside", "Gradient (inside)",
-                               "Gradient (outside)"),
-                  bioIndexName := {{bioindex}}) %>%
-    dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
-                  RespSampleDate, bioComm, bioIndexName, bioIndex, Quality,
-                  Stressor, StressorValue, LoE, Score)
+  df.scores <- df.sc |>
+    dplyr::filter(respName == bioindex) |>
+    dplyr::select(StationID, stressName, stressLabel, SRLin_Score_inside, SRLin_Score_outside) |>
+    dplyr::left_join(df_SiteData_join, by = c("StationID", "stressName"="Stressor")) |>
+    dplyr::select(-stressName) |>
+    dplyr::rename("Stressor" = "stressLabel", "bioComm" = "BioComm") |>
+    tidyr::pivot_longer(cols = c(SRLin_Score_inside, SRLin_Score_outside), names_to = "LoE", values_to = "Score")
 
   return(list(df.scores = df.scores,
-              df_gap = df_gap))
+              df_gap = data_gaps))
 
-} ##FUNCTION.END
+} # function end
+
+#' Generate scores for the biological gradient line of evidence
+#'
+#' @param data paired stressor response data filtered to current stressor, response, and case
+#' @param type case (inside or outside)
+#' @param p.val_cutoff p value cutoff
+#' @param r2_cutoff r2 cutoff
+#' @param exp.dir expected slope direction
+#'
+#' @return data with 75th percentile prediction interval and summary of regression model
+#' @export
+bioStrRespScore <- function(data, type = c("inside", "outside"),  p.val_cutoff, r2_cutoff, exp.dir){
+  model <- stats::lm(Response ~ Stressor, data = data,
+                     na.action = stats::na.exclude)
+
+  model_pred <- stats::predict(model, data, interval = "prediction", level = 0.75)
+
+  data <- cbind(data, model_pred)
+
+  model_summary <- data.frame(intercept = model$coefficients[1] |> unname() |> round(1),
+                              slope = model$coefficients[2] |> unname() |> round(1),
+                              r2 = summary(model)$r.squared |> round(3),
+                              pvalue = summary(model)$coefficients[2,4] |> round(3),
+                              n = nrow(data),
+                              tval = summary(model)$coefficients[2,3] |> round(3))
+
+  if(model_summary$r2 > r2_cutoff & model_summary$pvalue < p.val_cutoff){
+
+    slope.dir <- ifelse(model_summary$slope < 0, -1, 1)
+
+    if(slope.dir == exp.dir){
+      model_summary$score <- 1
+      model_summary$score_txt <- paste0("1 (Supporting): R2 > ", r2_cutoff, ", p-value < ", p.val_cutoff)
+    } else{
+      model_summary$score <- -1
+      model_summary$score_text <- paste0("-1 (Refuting): R2 > ", r2_cutoff, ", p-value < ", p.val_cutoff)
+    }
+
+  } else{
+    model_summary$score <- 0
+    model_summary$score_txt <- paste0("0 (Indeterminate): R2 < ", r2_cutoff, ", p-value > ", p.val_cutoff)
+  }
+
+  model_summary$caption <- paste0("Regression (", type, "-the-case samples): y = ",
+                                  model_summary$slope, " x + ", model_summary$intercept,
+                                  " ~ R2 = ", model_summary$r2, " ~ p-value = ",
+                                  model_summary$pvalue, " ~ n = ", model_summary$n,
+                                  "\nscore = ", model_summary$score_txt)
+
+  return(list(data = data,
+              model_summary = model_summary))
+}
+
+#' Generate biological gradient (linear regression) plot
+#'
+#' @param data paired stressor response data filtered to current stressor, response, and case
+#' @param site_data target site paired stressor response data filtered to current stressor, response, and case
+#' @param type case (inside or outside)
+#' @param stressLabel current stressor label
+#' @param respLabel current response label
+#' @param targetSampleLabels boolean to label target site samples with response ID
+#' @param TargetSiteID target site identifier
+#' @param caption caption associated with scoring
+#' @param stressName current stressor name
+#' @param respName current response name
+#' @param width plot width
+#' @param height plot height
+#' @param units plot units
+#' @param dpi plot resolution
+#'
+#' @return Saves plots. No return.
+#' @export
+bioStrRspPlot <- function(data, site_data, type = c("inside", "outside"), stressLabel, respLabel, targetSampleLabels, TargetSiteID, caption, stressName, respName, width, height, units, dpi){
+  plot1 <- ggplot2::ggplot() +
+    ggplot2::geom_smooth(data = data,
+                         ggplot2::aes(x = Stressor, y = Response),
+                         method = stats::lm,
+                         formula = 'y ~ x',
+                         color = "black",
+                         fill = "black",
+                         alpha = 0.2,
+                         show.legend = FALSE,
+                         na.rm = TRUE) +
+    ggplot2::geom_line(data = data,
+                       ggplot2::aes(x = Stressor, y = lwr),
+                       color = "black",
+                       linetype = "dashed",
+                       show.legend = FALSE,
+                       na.rm = TRUE)+
+    ggplot2::geom_line(data = data,
+                       ggplot2::aes(x = Stressor, y = upr),
+                       color = "black",
+                       linetype = "dashed",
+                       show.legend = FALSE,
+                       na.rm = TRUE) +
+    ggplot2::geom_point(data = data,
+                        ggplot2::aes(x = Stressor, y = Response,
+                                     color = Quality, fill = Quality,
+                                     shape = Quality), alpha = 0.5,
+                        na.rm = TRUE) +
+    ggplot2::scale_fill_manual(name = "Quality",
+                               breaks = c("Degraded", "Not degraded"),
+                               values = get(paste0("bio_fill_", type)), drop = FALSE) +
+    ggplot2::scale_color_manual(name = "Quality",
+                                breaks = c("Degraded", "Not degraded"),
+                                values = get(paste0("bio_fill_", type)), drop = FALSE) +
+    ggplot2::scale_shape_manual(name = "Quality",
+                                breaks = c("Degraded", "Not degraded"),
+                                values = get(paste0("bio_shape_", type)), drop = FALSE) +
+    ggplot2::geom_point(data = site_data ,
+                        ggplot2::aes(x = Stressor, y = Response, size = Case),
+                        color = "black", shape = get(paste0("bio_shape_", type))[3],
+                        fill = get(paste0("bio_fill_", type))[3],
+                        na.rm = TRUE) +
+    ggplot2::scale_size_manual(name = "", values = get(paste0("bio_size_", type))[3]*1.5)+
+    ggplot2::labs(x = stressLabel,
+                  y = respLabel,
+                  title = paste0(TargetSiteID, ": Biological gradient (linear regression) line of evidence"),
+                  subtitle = paste("Is there a linear relationship between stressor and biological response from", type,
+                                   "the case?\nLinear regression with 75th percentile prediction interval"),
+                  caption = caption)+
+    ggplot2::theme_bw() +
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = 12),
+                   plot.subtitle = ggplot2::element_text(hjust = 0.5, size = 10),
+                   plot.caption = ggplot2::element_text(size = 8),
+                   legend.title = ggplot2::element_text(size = 10),
+                   legend.text = ggplot2::element_text(size = 8),
+                   axis.title = ggplot2::element_text(size = 10))
+
+  if(targetSampleLabels == TRUE){
+    plot1 <- plot1 +
+      ggrepel::geom_label_repel(data = site_data,
+                                ggplot2::aes(x = Stressor, y = Response, label = RespSampleID),
+                                color = get(paste0("bio_fill_", type))[3],
+                                size = 8/ggplot2::.pt)
+  }
+
+  file_append <- ifelse(type == "inside", "GI.png", "GO.png")
+
+  fn_png_out <- paste(TargetSiteID, stressName, biocomm, respName, file_append, sep = "_")
+  fn_png_out <- file.path(dir_path_stress, fn_png_out)
+
+  if (boo_plot) {
+    ggplot2::ggsave(fn_png_out, plot1, width = plotW, height = plotH,
+                    units = plotunits, dpi = plotdpi)
+  }
+
+}
+
+#' Write gaps for running biological gradient line of evidence
+#'
+#' @param df_CompData_sr inside the case paired stressor response data filtered to current stressor and response
+#' @param df_NotCompData_sr outside the case paired stressor response data filtered to current stressor and response
+#' @param stressName current stressor name
+#' @param respName current response name
+#'
+#' @return
+#' @export Returns list with gap statement dataframe and boolean indicators of
+#' to evaluate biological gradient line of evidence for inside and outside the case.
+bioStrRspGaps <- function(df_CompData_sr, df_NotCompData_sr, stressName, respName){
+  n_inside <- nrow(df_CompData_sr)
+  n_outside <- nrow(df_NotCompData_sr)
+
+  inside_ne <- FALSE
+  outside_ne <- FALSE
+
+  inside.gap.statement <- data.frame()
+  outside.gap.statement <- data.frame()
+
+  inside.condition = paste0("Number of inside-the-case samples; stressor: ", stressName, "; response: ", respName)
+  outside.condition = paste0("Number of outside-the-case samples; stressor: ", stressName, "; response: ", respName)
+
+  # Inside the case gaps
+  if(n_inside < 2){ # only possible if min_cases set to 1
+    inside.gap.statement <- data.frame(
+      fxnname = "getBioStressorResponse",
+      condition = inside.condition,
+      result = as.character(n_inside),
+      comment =  "< 2 samples")
+
+    inside_ne <- TRUE
+  } else if(n_inside < min_cases){ # should not happen due to earlier screening
+    inside.gap.statement <- data.frame(
+      fxnname = "getBioStressorResponse",
+      condition = inside.condition,
+      result = as.character(n_inside),
+      comment =  paste0("< ", min_cases, " samples"))
+
+    inside_ne <- TRUE
+  }
+
+  # Outside the case gaps
+  if(n_outside == 0){
+    outside.gap.statement <- data.frame(
+      fxnname = "getBioStressorResponse",
+      condition = outside.condition,
+      result = as.character(n_outside),
+      comment =  "0 samples")
+
+    outside_ne <- TRUE
+  } else if(n_outside < 2){
+    outside.gap.statement <- data.frame(
+      fxnname = "getBioStressorResponse",
+      condition = outside.condition,
+      result = as.character(n_outside),
+      comment =  "< 2 samples")
+
+    outside_ne <- TRUE
+  } else if(n_outside < min_cases){
+    outside.gap.statement <- data.frame(
+      fxnname = "getBioStressorResponse",
+      condition = outside.condition,
+      result = as.character(n_outside),
+      comment =  paste0("< ", min_cases, " samples"))
+
+    outside_ne <- TRUE
+  }
+
+  gaps.list <- list(gap = dplyr::bind_rows(inside.gap.statement, outside.gap.statement),
+                    inside_ne = inside_ne,
+                    outside_ne = outside_ne)
+
+  return(gaps.list)
+}
+
+#' Generate stressor response correlation plot
+#'
+#' @param TargetSiteID target site identifier
+#' @param df_corr dataframe containing correlation coefficients for stressor response pairs
+#' @param dir_path path to write plot
+#' @param width plot width
+#' @param height plot height
+#' @param units plot units
+#' @param dpi plot resoltuion
+#'
+#' @return Saves correlation plot. No return
+#' @export
+bioStrCorrPlot <- function(TargetSiteID, df_corr, dir_path, width, height, units, dpi){
+
+  wrap_length <- 28
+
+  p_cp <- ggplot2::ggplot(df_corr, ggplot2::aes(x = stringr::str_wrap(respLabel, wrap_length),
+                                                y = stringr::str_wrap(stressLabel, wrap_length),
+                                                fill = estimate)) +
+    ggplot2::geom_tile(color = "black", lwd = 1, linetype = 1) +
+    ggplot2::geom_text(ggplot2::aes(label = estimate), color = "black", size = 2.5) +
+    ggplot2::scale_fill_gradient2(low = "blue", high = "red", midpoint = 0,
+                                  limits = c(-1, 1), guide = "colorbar") +
+    ggplot2::coord_flip() +
+    ggplot2::theme_bw() +
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = ggplot2::rel(1.3)),
+                   legend.title = ggplot2::element_text(size = ggplot2::rel(1)),
+                   legend.text = ggplot2::element_text(size = ggplot2::rel(0.8)),
+                   axis.title = ggplot2::element_text(size = ggplot2::rel(1.3)),
+                   axis.text.x = ggplot2::element_text(color = "black", size = ggplot2::rel(1), angle = 45,
+                                                       hjust = 1),
+                   axis.text.y = ggplot2::element_text(color = "black", size = ggplot2::rel(1), angle = 30)) +
+    ggplot2::labs(title = paste0(TargetSiteID, ": Stressor-Response Correlations"),
+                  x = "Responses",
+                  y = "Stressors",
+                  fill = "Estimate")
+
+  # Save correlation plot
+  fn_png_cp <- file.path(dir_path,
+                         paste0(TargetSiteID, "_", biocomm, "_InsideCorrPlot.png"))
+  ggplot2::ggsave(fn_png_cp, p_cp, width = plotH, height = plotW,
+                  units = plotunits, dpi = plotdpi)
+
+}
+
+#' Generate correlation gaps
+#'
+#' @param data inside the case paired stressor-response data
+#' @param stressName current stressor name
+#' @param respName current response name
+#'
+#' @return Correlation gaps dataframe
+#' @export
+bioStrRespCorrGaps <- function(data, stressName, respName){
+  gap.statement.str <- data.frame()
+  gap.statement.resp <- data.frame()
+
+  if (stats::sd(data$Stressor) == 0) { # Vertical line
+    gap.statement.str <- data.frame(
+      fxnname = "getBioStressorResponse",
+      condition = paste(stressName, respName, sep = ":"),
+      result = "0",
+      comment = "Stressor data in the inside-the-case sample set have a standard deviation of zero: all values are equal"
+    )
+  }
+  if (stats::sd(data$Response) == 0) { # Horizontal line
+    gap.statement.resp <- data.frame(
+      fxnname = "getBioStressorResponse",
+      condition = paste(stressName, respName, sep = ":"),
+      result = "0",
+      comment = "Response data in the inside-the-case sample set have a standard deviation of zero: all values are equal"
+    )
+  }
+  return(dplyr::bind_rows(gap.statement.str, gap.statement.resp))
+}
