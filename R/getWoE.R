@@ -6,37 +6,28 @@
 #
 #' @title Weight-of-Evidence summary
 #'
-#' @description Summarize weight of evidence using scores from other functions.
-#'
-#' @details Stressor-based weight of evidence for the stressor as a cause of impairment
-#'          for the specified biological community. Combines information from
-#'          the co-occurrence, stressor-response using data from or outside the
-#'          case, verified predictions, and stressor-response from laboratory data.
+#' @description Summarize weight of evidence scores
 #'
 #' Uses the packages dplyr and tidyr.
 #'
-#' @param TargetSiteID Site ID
-#' @param biocomm Biological community; algae or BMI.  Default = "BMI".
-#' @param dfLoE Dataframe containing the lines of evidence scores for each
-#'              stressor and sample in long form.
-#' @param dfStress x
-#' @param dir_results Directory to save tables. Default = working directory and Results.
-#' @param dir_WoE x
-#' @param plotdpi x
-#' @param plotH x
-#' @param plotW x
-#' @param plotunits x
-#' @param boo_plot x
+#' @param TargetSiteID target side identifier
+#' @param biocomm current biological community
+#' @param dfLoE dataframe containing the lines of evidence scores
+#' @param dfStress metadata for stressors passing the co-occurrence screen
+#' @param dir_results directory to save results
+#' @param dir_WoE subdirectory for weight of evidence outputs
+#' @param plotdpi plot resolution
+#' @param plotH plot height
+#' @param plotW plot width
+#' @param plotunits plot units
+#' @param boo_plot boolean for generating plots
 #'
-#' @return Two tab-delimited tables containing weight of evidence information:
-#'         one detailed, and one summary. The detailed table includes stressors
-#'         and the lines of evidence for or against them. The summary table
-#'         includes the number of lines that support, refute, are equivalent,
-#'         or were not evaluated.
+#' @return No returns. Writes a weight of evidence table with scores for each line of evidence
+#' and a summary weight of evidence table which counts the number of lines of evidence
+#' supporting, refuting, indeterminate and not evaluated for each target site
+#' stressor-response pair. Also writes a bar chart depicting the summary weight of evidence table.
 #'
 #' @keywords internal
-#' @examples
-#' # None at this time
 #' @export
 getWoE <- function(TargetSiteID,
                    biocomm,
@@ -72,7 +63,6 @@ getWoE <- function(TargetSiteID,
   }
 
   # define pipe
-  `%>%` <- dplyr::`%>%`
   biocomm <- toupper(biocomm)
 
   # Write results directory ----
@@ -91,34 +81,32 @@ getWoE <- function(TargetSiteID,
     }
   }
 
-  dfLoE_summary <- dfLoE %>%
-    dplyr::mutate(Score = ifelse(Score == "NE", NA, Score),
+  # Create summary line of evidence table, rolling up supporting, refuting, indeterminate, and not evaluated
+  dfLoE_summary <- dfLoE |>
+    dplyr::mutate(Score = dplyr::if_else(Score == "NE", NA, Score),
                   Score = suppressWarnings(as.numeric(Score)),
                   StressorValue = round(StressorValue, 3),
-                  bioComm = toupper(bioComm)) %>%
+                  bioComm = toupper(bioComm)) |>
     dplyr::group_by(StationID, StressSampleID, StressSampleDate,
                     RespSampleID, RespSampleDate, bioComm, Stressor,
-                    StressorValue) %>%
+                    StressorValue) |>
     dplyr::summarize(NumSupport = sum(Score > 0, na.rm = TRUE),
                      NumRefute = sum(Score < 0, na.rm = TRUE),
                      NumIndeterminate = sum(Score == 0, na.rm = TRUE),
                      NumNotEvaluated = sum(is.na(Score)),
-                     .groups = "drop_last") %>%
+                     .groups = "drop") |>
     dplyr::arrange(StationID, Stressor, StressSampleDate)
 
   write.csv(dfLoE_summary,
               file.path(dir.path, paste0(TargetSiteID, "_LoESummary.csv")), row.names = FALSE)
 
-
-  dfLoESummary_pivot <- dfLoE_summary %>%
+  # Generate summary line of evidence plot
+  dfLoESummary_pivot <- dfLoE_summary |>
     dplyr::select(Stressor, StressSampleID, StressSampleDate, NumSupport,
-                  NumRefute, NumIndeterminate, NumNotEvaluated) %>%
-    dplyr::arrange(Stressor, StressSampleDate) %>%
-    dplyr::rename("Support" = "NumSupport", "Refute" = "NumRefute", "Indeterminate" = "NumIndeterminate") %>%
-    dplyr::select(-NumNotEvaluated) %>%
-    tidyr::pivot_longer(cols = c("Support", "Refute", "Indeterminate"), names_to = "Evidence", values_to = "Count") %>%
-    dplyr::mutate(Evidence = forcats::fct_relevel(as.factor(Evidence), "Support", "Refute", "Indeterminate")) %>%
-    dplyr::ungroup() %>%
+                  NumRefute, NumIndeterminate) |>
+    dplyr::rename("Support" = "NumSupport", "Refute" = "NumRefute", "Indeterminate" = "NumIndeterminate") |>
+    tidyr::pivot_longer(cols = c("Support", "Refute", "Indeterminate"), names_to = "Evidence", values_to = "Count") |>
+    dplyr::mutate(Evidence = forcats::fct_relevel(as.factor(Evidence), "Support", "Refute", "Indeterminate")) |>
     dplyr::mutate(
       StressSampleID = as.character(StressSampleID),
       Stressor = stringr::str_wrap(Stressor, width = 40),
@@ -127,21 +115,20 @@ getWoE <- function(TargetSiteID,
                                              stringr::str_sub(StressSampleID, ceiling(nchar(StressSampleID)/2) + 1, nchar(StressSampleID)), "\n"),
                                       StressSampleID))
 
-
-  stressor_order <- dfLoESummary_pivot %>%
-    dplyr::filter(Evidence == "Support") %>%
-    dplyr::group_by(Stressor) %>%
-    dplyr::summarize(max_count = max(Count)) %>%
-    dplyr::arrange(max_count) %>%
+  stressor_order <- dfLoESummary_pivot |>
+    dplyr::filter(Evidence == "Support") |>
+    dplyr::group_by(Stressor) |>
+    dplyr::summarize(max_count = max(Count)) |>
+    dplyr::arrange(max_count) |>
     dplyr::pull(Stressor)
 
-  sample_order <- dfLoESummary_pivot %>%
-    dplyr::distinct(StressSampleID, StressSampleDate) %>%
-    dplyr::arrange(dplyr::desc(StressSampleDate)) %>%
+  sample_order <- dfLoESummary_pivot |>
+    dplyr::distinct(StressSampleID, StressSampleDate) |>
+    dplyr::arrange(dplyr::desc(StressSampleDate)) |>
     dplyr::pull(StressSampleID)
 
 
-  dfLoESummary_pivot <- dfLoESummary_pivot %>%
+  dfLoESummary_pivot <- dfLoESummary_pivot |>
     dplyr::mutate(
       Stressor = as.factor(Stressor),
       Stressor = forcats::fct_relevel(Stressor, stressor_order),
@@ -169,25 +156,15 @@ getWoE <- function(TargetSiteID,
                     units = plotunits)
   }
 
-  dfLoE <- dfLoE %>%
+  dfLoE <- dfLoE |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
-                  RespSampleDate, bioComm, Stressor, StressorValue, LoE, Score) %>%
+                  RespSampleDate, bioComm, Stressor, StressorValue, LoE, Score) |>
     dplyr::mutate(StressorValue = round(StressorValue, 3),
-                  bioComm = toupper(bioComm)) %>%
+                  bioComm = toupper(bioComm)) |>
     tidyr::pivot_wider(id_cols = c(StationID, StressSampleID, StressSampleDate,
                                    RespSampleID, RespSampleDate, bioComm,
                                    Stressor, StressorValue), names_from = LoE,
-                       values_from = Score) %>%
-    # dplyr::mutate(CO = tidyr::replace_na(CO, "NE"),
-    #               Suff = tidyr::replace_na(Suff, "NE"),
-    #               `Gradient (inside)` = tidyr::replace_na(`Gradient (inside)`,
-    #                                                       "NE"),
-    #               VP_SSTV = tidyr::replace_na(VP_SSTV, "NE"),
-    #               VP_SSIbox = tidyr::replace_na(VP_SSIbox, "NE"),
-    #               VP_SSIlog = tidyr::replace_na(VP_SSIlog, "NE"),
-    #               TS = tidyr::replace_na(TS, "NE"),
-    #               `Gradient (outside)` = tidyr::replace_na(`Gradient (outside)`,
-    #                                                        "NE"))
+                       values_from = Score) |>
     dplyr::arrange(StationID, Stressor, StressSampleDate)
 
   write.csv(dfLoE, file.path(dir.path, paste0(TargetSiteID, "_LoEs.csv")), row.names = FALSE)

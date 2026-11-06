@@ -99,6 +99,7 @@ getBioStressorResponses <- function(TargetSiteID,
 
   # Definitions ####
   biocomm <- toupper(biocomm)
+  not_all_na <- function(x) {!all(is.na(x))}
 
   # Write results directory ----
   out.folders <- c(dir_plots, TargetSiteID, biocomm, dir_sub)
@@ -113,22 +114,6 @@ getBioStressorResponses <- function(TargetSiteID,
       dir.create(dir_path)
     }
   }
-
-  # Plot vars, inside-the-case
-  plotvarsIn  <- plotvars |>
-    dplyr::filter(Type %in% c("target", "insideND", "insideD"))
-  bio_fill_inside    <- rev(unlist(plotvarsIn$Fill)) # Degraded, Not degraded, Target
-  bio_shape_inside   <- rev(unlist(plotvarsIn$Shape)) # down triangle, circle, triangle
-  bio_size_inside    <- rev(unlist(plotvarsIn$Size)) # Degraded, Not degraded, Target
-  bio_alpha_inside   <- rev(unlist(plotvarsIn$Alpha)) # Degraded, Not degraded, Target
-
-  # Plot vars, outside-the-case
-  plotvarsOut  <- plotvars |>
-    dplyr::filter(Type %in% c("target", "outsideND", "outsideD"))
-  bio_fill_outside    <- rev(unlist(plotvarsOut$Fill)) # Degraded, Not degraded, Target
-  bio_shape_outside   <- rev(unlist(plotvarsOut$Shape)) # down triangle, circle, triangle
-  bio_size_outside    <- rev(unlist(plotvarsOut$Size)) # Degraded, Not degraded, Target
-  bio_alpha_outside   <- rev(unlist(plotvarsOut$Alpha)) # Degraded, Not degraded, Target
 
   # Merge other metrics into paired dataset with transformed stressor values
   df_datapaired <- merge(df_datapaired, df_respdata,
@@ -220,17 +205,17 @@ getBioStressorResponses <- function(TargetSiteID,
         tidyr::drop_na()
 
       df_CompData_sr <- df_CompData |>
-        dplyr::select(all_of(respName), all_of(stressName), Quality) |>
+        dplyr::select(dplyr::all_of(respName), dplyr::all_of(stressName), Quality) |>
         dplyr::rename(Response = respName, Stressor = stressName) |>
         tidyr::drop_na()
 
       df_NotCompData_sr <- df_NotCompData |>
-        dplyr::select(all_of(respName), all_of(stressName), Quality) |>
+        dplyr::select(dplyr::all_of(respName), dplyr::all_of(stressName), Quality) |>
         dplyr::rename(Response = respName, Stressor = stressName) |>
         tidyr::drop_na()
 
       # Write sample number data gaps
-      gaps_sr <- bioStrRspGaps(df_CompData_sr, df_NotCompData_sr, stressName, respName)
+      gaps_sr <- bioStrRspGaps(df_CompData_sr, df_NotCompData_sr, stressName, respName, min_cases)
       data_gaps <- dplyr::bind_rows(data_gaps, gaps_sr$gap)
 
       # Inside figure and score
@@ -247,7 +232,8 @@ getBioStressorResponses <- function(TargetSiteID,
         # Plotting
         inside_plot <- bioStrRspPlot(score_sr_inside$data, df_SiteData_sr, "inside", stressLabel, respLabel,
                                      targetSampleLabels, TargetSiteID, sr_inside_mod$caption,
-                                     stressName, respName, plotW, plotH, plotunits, plotdpi)
+                                     stressName, respName, plotW, plotH, plotunits, plotdpi, boo_plot,
+                                     dir_path_stress, plotvars, biocomm)
 
         # Correlation
         corr_gaps <- bioStrRespCorrGaps(df_CompData_sr, stressName, respName)
@@ -286,7 +272,8 @@ getBioStressorResponses <- function(TargetSiteID,
         # Plotting
         outside_plot <- bioStrRspPlot(score_sr_outside$data, df_SiteData_sr, "outside", stressLabel, respLabel,
                                       targetSampleLabels, TargetSiteID, score_sr_outside$model_summary$caption,
-                                      stressName, respName, plotW, plotH, plotunits, plotdpi)
+                                      stressName, respName, plotW, plotH, plotunits, plotdpi, boo_plot,
+                                      dir_path_stress, plotvars, biocomm)
 
       } else{
         SRLin_Score_outside <- "NE"
@@ -313,7 +300,7 @@ getBioStressorResponses <- function(TargetSiteID,
     } # response loop end
   } # stressor loop end
 
-  bioStrCorrPlot(TargetSiteID, df.CorrTable, dir_path, plotW, plotH, plotunits, plotdpi)
+  bioStrCorrPlot(TargetSiteID, df.CorrTable, dir_path, plotW, plotH, plotunits, plotdpi, biocomm)
 
   write.csv(df.CorrTable, fp_corr, row.names = FALSE)
   write.csv(df.sc, fp_scores, row.names = FALSE)
@@ -321,8 +308,8 @@ getBioStressorResponses <- function(TargetSiteID,
   df_SiteData_join <- df_SiteData |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
                   RespSampleDate, BioComm, Quality, dplyr::all_of(stressors), dplyr::all_of(bioindex)) |>
-    tidyr::pivot_longer(cols = all_of(stressors), names_to = "Stressor", values_to = "StressorValue") |>
-    tidyr::pivot_longer(cols = all_of(bioindex), names_to = "bioIndexName", values_to = "bioIndex")
+    tidyr::pivot_longer(cols = dplyr::all_of(stressors), names_to = "Stressor", values_to = "StressorValue") |>
+    tidyr::pivot_longer(cols = dplyr::all_of(bioindex), names_to = "bioIndexName", values_to = "bioIndex")
 
   df.scores <- df.sc |>
     dplyr::filter(respName == bioindex) |>
@@ -371,7 +358,7 @@ bioStrRespScore <- function(data, type = c("inside", "outside"),  p.val_cutoff, 
       model_summary$score_txt <- paste0("1 (Supporting): R2 > ", r2_cutoff, ", p-value < ", p.val_cutoff)
     } else{
       model_summary$score <- -1
-      model_summary$score_text <- paste0("-1 (Refuting): R2 > ", r2_cutoff, ", p-value < ", p.val_cutoff)
+      model_summary$score_txt <- paste0("-1 (Refuting): R2 > ", r2_cutoff, ", p-value < ", p.val_cutoff)
     }
 
   } else{
@@ -408,7 +395,26 @@ bioStrRespScore <- function(data, type = c("inside", "outside"),  p.val_cutoff, 
 #'
 #' @return Saves plots. No return.
 #' @export
-bioStrRspPlot <- function(data, site_data, type = c("inside", "outside"), stressLabel, respLabel, targetSampleLabels, TargetSiteID, caption, stressName, respName, width, height, units, dpi){
+bioStrRspPlot <- function(data, site_data, type = c("inside", "outside"), stressLabel, respLabel, targetSampleLabels,
+                          TargetSiteID, caption, stressName, respName, width, height, units, dpi, boo_plot,
+                          dir_path_stress, plotvars, biocomm){
+
+  # Plot vars, inside-the-case
+  plotvarsIn  <- plotvars |>
+    dplyr::filter(Type %in% c("target", "insideND", "insideD"))
+  bio_fill_inside    <- rev(unlist(plotvarsIn$Fill)) # Degraded, Not degraded, Target
+  bio_shape_inside   <- rev(unlist(plotvarsIn$Shape)) # down triangle, circle, triangle
+  bio_size_inside    <- rev(unlist(plotvarsIn$Size)) # Degraded, Not degraded, Target
+  bio_alpha_inside   <- rev(unlist(plotvarsIn$Alpha)) # Degraded, Not degraded, Target
+
+  # Plot vars, outside-the-case
+  plotvarsOut  <- plotvars |>
+    dplyr::filter(Type %in% c("target", "outsideND", "outsideD"))
+  bio_fill_outside    <- rev(unlist(plotvarsOut$Fill)) # Degraded, Not degraded, Target
+  bio_shape_outside   <- rev(unlist(plotvarsOut$Shape)) # down triangle, circle, triangle
+  bio_size_outside    <- rev(unlist(plotvarsOut$Size)) # Degraded, Not degraded, Target
+  bio_alpha_outside   <- rev(unlist(plotvarsOut$Alpha)) # Degraded, Not degraded, Target
+
   plot1 <- ggplot2::ggplot() +
     ggplot2::geom_smooth(data = data,
                          ggplot2::aes(x = Stressor, y = Response),
@@ -479,8 +485,8 @@ bioStrRspPlot <- function(data, site_data, type = c("inside", "outside"), stress
   fn_png_out <- file.path(dir_path_stress, fn_png_out)
 
   if (boo_plot) {
-    ggplot2::ggsave(fn_png_out, plot1, width = plotW, height = plotH,
-                    units = plotunits, dpi = plotdpi)
+    ggplot2::ggsave(fn_png_out, plot1, width = width, height = height,
+                    units = units, dpi = dpi)
   }
 
 }
@@ -495,7 +501,7 @@ bioStrRspPlot <- function(data, site_data, type = c("inside", "outside"), stress
 #' @return
 #' @export Returns list with gap statement dataframe and boolean indicators of
 #' to evaluate biological gradient line of evidence for inside and outside the case.
-bioStrRspGaps <- function(df_CompData_sr, df_NotCompData_sr, stressName, respName){
+bioStrRspGaps <- function(df_CompData_sr, df_NotCompData_sr, stressName, respName, min_cases){
   n_inside <- nrow(df_CompData_sr)
   n_outside <- nrow(df_NotCompData_sr)
 
@@ -573,7 +579,7 @@ bioStrRspGaps <- function(df_CompData_sr, df_NotCompData_sr, stressName, respNam
 #'
 #' @return Saves correlation plot. No return
 #' @export
-bioStrCorrPlot <- function(TargetSiteID, df_corr, dir_path, width, height, units, dpi){
+bioStrCorrPlot <- function(TargetSiteID, df_corr, dir_path, width, height, units, dpi, biocomm){
 
   wrap_length <- 28
 
@@ -601,8 +607,8 @@ bioStrCorrPlot <- function(TargetSiteID, df_corr, dir_path, width, height, units
   # Save correlation plot
   fn_png_cp <- file.path(dir_path,
                          paste0(TargetSiteID, "_", biocomm, "_InsideCorrPlot.png"))
-  ggplot2::ggsave(fn_png_cp, p_cp, width = plotH, height = plotW,
-                  units = plotunits, dpi = plotdpi)
+  ggplot2::ggsave(fn_png_cp, p_cp, width = width, height = height,
+                  units = units, dpi = dpi)
 
 }
 

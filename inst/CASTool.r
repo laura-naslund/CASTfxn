@@ -33,10 +33,12 @@ if(cfg$boo_shiny == FALSE) {
 
   cfg <- setUpRConsole(
       # File path of data directory
-      in_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/8-nars-test-data/Data",
+      #in_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/8-nars-test-data/Data",
+      in_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/6-state-test-data/WA_CASTool_TestData_20260407",
       # File path of results directory
-      out_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/8-nars-test-data/Results",
-      region = "Rhode Island"
+      #out_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/8-nars-test-data/Results",
+      out_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/6-state-test-data/WA_CASTool_TestData_20260407_results",
+      region = "Washington"
     ) |>
     append(cfg, values = _)
 
