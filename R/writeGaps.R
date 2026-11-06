@@ -31,10 +31,9 @@ writeCoOccurElimGap <- function(TargetSiteID, bioComm){
 
 #' Write gap statement when there are no SSTVs
 #'
-#' @return
+#' @param TargetSiteID target site identifier
+#' @return gap statement if not stressors have SSTVs
 #' @export
-#'
-#' @examples
 writeSSTVGap <- function(TargetSiteID){
   msg <- "No site stressors have stressor-specific tolerance values"
   message(msg)
@@ -52,13 +51,11 @@ writeSSTVGap <- function(TargetSiteID){
 
 #' Write gap statement for SSI missing from inclusion in response metadata
 #'
-#' @param index
-#' @param bioComm
+#' @param index stressor specific index
+#' @param bioComm applicable biological community
 #'
-#' @return
+#' @return gap statement if an SSI is listed in the stressor metadata but not included in biological response data
 #' @export
-#'
-#' @examples
 writeMissingSSIGap <- function(index, bioComm){
   msg <- paste0(paste(unique(index), collapse = ", "),
                 " are listed as stressor-specific index in stressor metadata but are not found as a metric to be included in ",
@@ -78,12 +75,10 @@ writeMissingSSIGap <- function(index, bioComm){
 
 #' Write gap statement for no SSIs
 #'
-#' @param TargetSiteID
+#' @param TargetSiteID target site identifier
 #'
-#' @return
+#' @return A gap statement if not SSIs are available
 #' @export
-#'
-#' @examples
 writeSSIGap <- function(TargetSiteID){
   msg <- "No site stressors have stressor-specific indices"
   message(msg)

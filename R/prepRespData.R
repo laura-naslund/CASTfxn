@@ -139,8 +139,8 @@ prepRespData <- function(file_dir,
         dplyr::group_by(RespSampleID, RespSampleDate) |>
         dplyr::mutate(SampleTotAbund = sum(NumInd, na.rm = TRUE),
                          NumTaxa = dplyr::n(),
-                         PctInd = round(NumInd / SampleTotAbund, 5),
-                         PctTaxa = round(1 / NumTaxa, 5)) |>
+                         PctInd = round(NumInd / SampleTotAbund, 5)*100,
+                         PctTaxa = round(1 / NumTaxa, 5) *100) |>
         dplyr::ungroup()
     } else {
       data_bioCounts <- data_bioCounts |>

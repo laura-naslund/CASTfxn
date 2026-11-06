@@ -220,7 +220,7 @@ getVerifiedPredictions <- function(TargetSiteID,
   fn_scores <-  file.path(dir.path, paste0(TargetSiteID, "_", biocomm,
                                            "_VP_SSTV_Scores.csv"))
 
-  write.csv(df_target_score_sum, fn_scores, row.names = FALSE)
+  write.csv(df_target_score |> dplyr::select(-max), fn_scores, row.names = FALSE)
 
   # Plot
   for(i in seq_along(stressors.sstv)){

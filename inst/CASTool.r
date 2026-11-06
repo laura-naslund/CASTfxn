@@ -37,7 +37,8 @@ if(cfg$boo_shiny == FALSE) {
       in_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/6-state-test-data/WA_CASTool_TestData_20260407",
       # File path of results directory
       #out_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/8-nars-test-data/Results",
-      out_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/6-state-test-data/WA_CASTool_TestData_20260407_results",
+      #out_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/6-state-test-data/WA_CASTool_TestData_20260407_results",
+      out_dir = "C:/Users/lnaslund/WA_Results",
       region = "Washington"
     ) |>
     append(cfg, values = _)
@@ -697,11 +698,10 @@ for (site in seq_len(nrow(df_targets))) {
         dplyr::filter(Stressor %in% stressors.ssi) |>
         dplyr::select(Stressor, SSIndex, Label, LogTransf)
 
-      info.ssi <- bioMetricInfo |>
+      info.ssi <- currentDataList$data_bioMetricsInfo |>
         dplyr::filter(MetricName %in% unique(info.stress.ssi$SSIndex))
 
       if(nrow(info.ssi)==0){
-
         temp <- writeMissingSSIGap(index = unique(info.stress.ssi$SSIndex), bioComm)
         gaps <- gaps |> dplyr::bind_rows(temp)
         rm(temp)
@@ -718,6 +718,7 @@ for (site in seq_len(nrow(df_targets))) {
                                      config           = cfg,
                                      dir_plots        = dir_results,
                                      dir_sub          = "_WoE",
+                                     incaseLabel = meta$incaseLabel,
                                      targetSampleLabels = meta$targetSampleLabels)
 
         df_VPSSIscores <- list.VPSSIscores$df.scores
