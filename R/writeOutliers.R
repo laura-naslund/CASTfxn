@@ -81,7 +81,7 @@ writeOutliers <- function(TargetSiteID,
   file.outliers <- paste0(TargetSiteID, "_outliers.csv")
   fn.outliers <- file.path(dir_results, TargetSiteID, file.outliers)
 
-  write.csv(df_outliers, fn.outliers, row.names=FALSE)
+  utils::write.csv(df_outliers, fn.outliers, row.names=FALSE)
 
   n_target_outliers <- df_outliers |>
     dplyr::filter(StationIDType == "Target site") |>

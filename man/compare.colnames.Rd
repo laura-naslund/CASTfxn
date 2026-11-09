@@ -6,6 +6,14 @@
 \usage{
 compare.colnames(required, actual)
 }
+\arguments{
+\item{required}{names of required columns for a file}
+
+\item{actual}{names of columns in a file}
+}
+\value{
+a statement about whether required columns are missing
+}
 \description{
 Compare column names
 }

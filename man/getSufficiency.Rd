@@ -7,8 +7,9 @@
 getSufficiency(
   TargetSiteID,
   df_data,
-  compSites,
   df_stressinfo,
+  df_resp,
+  df_respinfo,
   biocomm,
   colBio,
   config = NULL,
@@ -17,93 +18,50 @@ getSufficiency(
   plotH = 6,
   plotW = 8,
   plotunits = "in",
-  dir_plots = file.path(getwd(), "Results"),
+  dir_plots,
   dir_sub = "_WoE",
   boo_plot = TRUE,
   targetSampleLabels = TRUE
 )
 }
 \arguments{
-\item{TargetSiteID}{ID of station to be evaluated. May have one or many samples.}
+\item{TargetSiteID}{target site identifier}
 
-\item{df_data}{dataframe containing matched stressor-response data for the
-biological response community desired}
+\item{df_data}{paired stressor-response data for the current biological community}
 
-\item{compSites}{vector containing comparator site IDs}
+\item{df_stressinfo}{metadata for stressors that passed the co-occurrence screen}
 
-\item{df_stressinfo}{dataframe containing stressor metadata (LogTransf, Label)}
+\item{df_resp}{biological response metric data for the current biological community}
 
-\item{biocomm}{Biological community; BMI, algae, or fish  Default = "BMI".}
+\item{df_respinfo}{biological response metadata for the current biological community}
+
+\item{biocomm}{current biological community}
 
 \item{colBio}{df_data column name for the field with biological index value.}
 
-\item{plotvars}{Standardized sizes, fills, shapes, and transparencies for plots.
-Defaults to data_plotvars}
+\item{config}{list containing configuration parameters}
 
-\item{plotdpi}{Standardized plot dpi. Defaults to plot_dpi. 600}
+\item{plotvars}{standardized sizes, fills, shapes, and transparencies for plots.}
 
-\item{plotH}{Standardized plot height. Defaults to plot_H. 6}
+\item{plotdpi}{standardized plot dpi. Defaults to plot_dpi. 600}
 
-\item{plotW}{Standardized plot width. Defaults to plot_W. 8}
+\item{plotH}{standardized plot height. Defaults to plot_H. 6}
 
-\item{plotunits}{Standardized plot units. Defaults to plot_units. "in"}
+\item{plotW}{standardized plot width. Defaults to plot_W. 8}
 
-\item{dir_plots}{Directory to save plots. Default = working directory and Results.}
+\item{plotunits}{standardized plot units. Defaults to plot_units. "in"}
 
-\item{dir_sub}{Subdirectory for outputs from this function. Default = "Sufficiency"}
+\item{dir_plots}{directory to save plots.}
 
-\item{boo_plot}{Boolean value indicating whether or not to print the plot.
-Defaults to TRUE.}
+\item{dir_sub}{subdirectory for weight of evidence outputs from this function. Default = "_WoE"}
+
+\item{boo_plot}{boolean value indicating whether or not to generate the plot. Defaults to TRUE.}
+
+\item{targetSampleLabels}{boolean to label target sample values}
 }
 \value{
-Writes individual plots as pngs, and a tab-delimited text file with
-        scores for the sufficiency line of evidence to a directory:
-        "Results/TargetSiteID/BioComm/Sufficiency".
+Writes individual plots as pngs and all sufficiency scores to a csv. Returns sufficiency scores for the biological index.
 }
 \description{
-Generates logistic regressions to answer the question:
-are stressor levels sufficient to explain the observed impairment?
-Also writes a tab-delimited text file containing scores for this line
-of evidence.
-}
-\details{
-\strong{Derive Evidence for Stressor Sufficiency from Field
-Observational Studies.}
-
-Stressor-response from field observational studies: Is the level of the
-stressor sufficient to explain the level of biological effect observed at
-the site?
-
-Using all comparator sites, fit logistical regression curve of the probability
-of poor condition (i.e., poor biological index score) as a function of
-stressor level.  Compare stressor levels from test site to levels
-corresponding to median (50%) and low (20%) probabilities of observing poor
-condition.
-
-1. Supports the case for the candidate cause.  Stressor levels at the test
-site are above the lower confidence limit  (LCL) corresponding to 50%
-probability of observing poor condition
-
-0. Indeterminate.  Stressor levels at the test site are between the LCL
-corresponding to 50% probability of observing poor condition and the UCL
-corresponding to 20% probability of observing poor condition.
-
--1. Weakens the case for the candidate cause.  Stressor levels at the test
-site are below the upper confidence limit (UCL) corresponding to 20%
-probability of observing poor condition.
-
-Cut function is used to assign narrative categories and degraded status
-based on the provided biological score, ensuring criteria are applied the
-same across all sites.
-
-The BioDegLab has to remain as the default values of Yes and No. Other
-values will break the code.
-
-Only a single biological measurement is used. But multiple stressors can be
-used.
-
-Uses the libraries dplyr, ggplot2, grid, stringr, and tidyr.
-}
-\examples{
-# None at this time
+Generates logistic regressions for the sufficiency line of evidence
 }

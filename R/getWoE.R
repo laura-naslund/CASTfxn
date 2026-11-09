@@ -97,7 +97,7 @@ getWoE <- function(TargetSiteID,
                      .groups = "drop") |>
     dplyr::arrange(StationID, Stressor, StressSampleDate)
 
-  write.csv(dfLoE_summary,
+  utils::write.csv(dfLoE_summary,
               file.path(dir.path, paste0(TargetSiteID, "_LoESummary.csv")), row.names = FALSE)
 
   # Generate summary line of evidence plot
@@ -167,7 +167,7 @@ getWoE <- function(TargetSiteID,
                        values_from = Score) |>
     dplyr::arrange(StationID, Stressor, StressSampleDate)
 
-  write.csv(dfLoE, file.path(dir.path, paste0(TargetSiteID, "_LoEs.csv")), row.names = FALSE)
+  utils::write.csv(dfLoE, file.path(dir.path, paste0(TargetSiteID, "_LoEs.csv")), row.names = FALSE)
 
 }
 

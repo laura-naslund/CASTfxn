@@ -2,7 +2,7 @@
 % Please edit documentation in R/writeOutliers.R
 \name{writeOutliers}
 \alias{writeOutliers}
-\title{Write Outliers}
+\title{Write outlier gap statements}
 \usage{
 writeOutliers(
   TargetSiteID,
@@ -10,39 +10,34 @@ writeOutliers(
   df_stressInfo,
   df_Sites,
   siteDetectsAll,
-  compSites,
+  compSites = NULL,
   useBC = FALSE,
-  allSites,
+  allSites = NULL,
   dir_results = file.path(getwd(), "Results")
 )
 }
 \arguments{
-\item{TargetSiteID}{Site ID}
+\item{TargetSiteID}{Target site identifier}
 
-\item{df_outliers}{Dataframe containing any stressor values identified outliers. Default = "data_outliers"}
+\item{df_outliers}{Dataframe containing any stressor values identified outliers.}
 
-\item{df_stressInfo}{Dataframe containing stressor metadata. Default = data_stressInfo}
+\item{df_stressInfo}{Dataframe containing stressor metadata.}
 
-\item{df_Sites}{x}
+\item{df_Sites}{Dataframe containing site information}
 
 \item{siteDetectsAll}{All stressors ever detected in any target site samples.}
 
-\item{compSites}{Vector containing comparator site identifiers (inside the case).}
+\item{compSites}{Vector containing comparator site identifiers (necessary if useBC = TRUE).}
 
-\item{useBC}{x}
+\item{useBC}{boolean to use biological similarity filter}
 
-\item{allSites}{Vector containing all "outside the case" identifiers}
+\item{allSites}{Vector containing all "outside the case" identifiers (necessary if useBC = TRUE)}
 
-\item{dir_results}{directory for results; Default = ./Results}
+\item{dir_results}{directory to write outliers description to}
 }
 \description{
-Writes identified outliers for target site, inside-the-case sites,
-and outside-the-case sites to the datagaps file.
-}
-\details{
-Writes information about sample outliers to the target site data gaps
-file, including site samples, inside-the-case (comparator) samples, and
-outside-the-case samples.
+Writes gap statements for identified outliers for target site, inside-the-case sites,
+and outside-the-case sites.
 
 Uses the library dplyr.
 }

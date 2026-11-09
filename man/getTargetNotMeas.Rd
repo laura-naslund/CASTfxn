@@ -6,6 +6,17 @@
 \usage{
 getTargetNotMeas(stress_elim, data_target, bioComm)
 }
+\arguments{
+\item{stress_elim}{stressor elimination list containing initial stressors evaluated}
+
+\item{data_target}{paired stressor-response dataset for the current biological community}
+
+\item{bioComm}{current biological community}
+}
+\value{
+list with a vector of stressors measured at the target site and
+a gap statement dataframe for stressors not measured at the target site
+}
 \description{
 Get stressors not measured at a target site
 }

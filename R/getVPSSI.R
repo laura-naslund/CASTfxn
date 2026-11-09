@@ -15,6 +15,7 @@
 #' @param biocomm current biological community
 #' @param df_bioMetricData metric data for the current biological community
 #' @param df_bioMetricInfo metric metadata for the current biological community
+#' @param config list of configuration parameters
 #' @param colBio index for the current biological community
 #' @param plotvars plotting parameters
 #' @param plotdpi standardized plot dpi. Default = 600
@@ -696,12 +697,12 @@ getVPSSI <- function(TargetSiteID,
 
     if (exists("df.scores.log")) {
       fn.scores.log <- paste(TargetSiteID, biocomm, "VPSSILog", "Scores.csv", sep = "_")
-      write.csv(df.scores.log, file.path(dir.path, fn.scores.log), row.names = FALSE)
+      utils::write.csv(df.scores.log, file.path(dir.path, fn.scores.log), row.names = FALSE)
     }
 
     if (exists("df.scores.box")) {
       fn.scores.box <- paste(TargetSiteID, biocomm, "VPSSIBox", "Scores.csv", sep = "_")
-      write.csv(df.scores.box, file.path(dir.path, fn.scores.box), row.names = FALSE)
+      utils::write.csv(df.scores.box, file.path(dir.path, fn.scores.box), row.names = FALSE)
     }
 
   # Scores ----

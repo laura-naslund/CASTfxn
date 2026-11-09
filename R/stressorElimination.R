@@ -146,7 +146,7 @@ getTargetNotMeas <- function(stress_elim,
 
   targMeasStress <- data_target |>
     dplyr::select(dplyr::all_of(possibleStressors)) |>
-    tidyr::pivot_longer(cols = everything()) |>
+    tidyr::pivot_longer(cols = dplyr::everything()) |>
     dplyr::filter(is.na(value)==FALSE) |>
     dplyr::distinct(name) |>
     dplyr::pull(name)
@@ -187,8 +187,8 @@ reportInsuffStress <- function(df_PairedStressResp,
     dplyr::filter(IncaseYN == 1) |>
     dplyr::select(StationID, IncaseCol, OutcaseCol, StressSampleDate,
                   RespSampleDate, StressSampleID, RespSampleID, BioComm,
-                  all_of(bioIndexGp), Quality,
-                  all_of(targMeasStress)
+                  dplyr::all_of(bioIndexGp), Quality,
+                  dplyr::all_of(targMeasStress)
     ) |>
     tidyr::pivot_longer(cols = !(StationID:Quality), names_to = "Stressor",
                         values_to = "StressorValue", values_drop_na = TRUE) |>

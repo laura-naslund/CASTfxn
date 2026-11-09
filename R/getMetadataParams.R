@@ -19,7 +19,7 @@ getMetadataParams <- function(out_dir = NULL,
   data_CASTmeta <- readRDS(file.path(out_dir, dn_checked_sk, "CASTmetadata.rds"))
 
   ## Set correct classes
-  out <- setNames(as.list(data_CASTmeta$Value), data_CASTmeta$Variable)
+  out <- stats::setNames(as.list(data_CASTmeta$Value), data_CASTmeta$Variable)
 
   out[c("DOlim",
         "pHlimLow",

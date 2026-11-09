@@ -74,15 +74,15 @@ getOutliers <- function(df_data,
     fn2 <- paste0(paramName, "_transf.png")
 
     # plot histogram of data
-    png(file.path(dir_plots, fn), width = 8, height = 6, units = "in", res = 100)
-    hist(df_sub$ResultValue, main = paste0("Histogram of ", paramName, " observations"), xlab = paramName)
-    dev.off()
+    grDevices::png(file.path(dir_plots, fn), width = 8, height = 6, units = "in", res = 100)
+    graphics::hist(df_sub$ResultValue, main = paste0("Histogram of ", paramName, " observations"), xlab = paramName)
+    grDevices::dev.off()
 
 
     if (unique(df_sub$LogTransf) == 1) {
-      png(file.path(dir_plots, fn2), width = 8, height = 6, units = "in", res = 100)
-      hist(df_sub$TransfResult, main = paste0("Histogram of Log1p transformed ", paramName, " observations"), xlab = paramName)
-      dev.off()
+      grDevices::png(file.path(dir_plots, fn2), width = 8, height = 6, units = "in", res = 100)
+      graphics::hist(df_sub$TransfResult, main = paste0("Histogram of Log1p transformed ", paramName, " observations"), xlab = paramName)
+      grDevices::dev.off()
     }
 
     # 3*IQR method for identifying outliers

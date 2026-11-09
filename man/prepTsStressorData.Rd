@@ -2,7 +2,7 @@
 % Please edit documentation in R/prepTsStressorData.R
 \name{prepTsStressorData}
 \alias{prepTsStressorData}
-\title{Prepare timestamped stressor data}
+\title{Prepare timestamped stressor data for CASTool}
 \usage{
 prepTsStressorData(
   config = NULL,
@@ -15,33 +15,25 @@ prepTsStressorData(
 )
 }
 \arguments{
-\item{in_dir}{x}
+\item{config}{list of configuration parameters}
 
-\item{out_dir}{directory where all rds files are stored}
+\item{in_dir}{directory containing checked CASTool data inputs}
 
-\item{fn_data}{x}
+\item{out_dir}{directory where data outputs are written}
 
-\item{fn_meta}{x}
+\item{fn_data}{name of timestamped stressor rds data file}
 
-\item{removeOutliers}{x}
+\item{fn_meta}{name of timestamped stressor rds metadata file}
 
-\item{sub_dir}{x}
+\item{removeOutliers}{boolean indicating whether to remove observations identified as outliers}
+
+\item{sub_dir}{subdirectory where stressor histograms are written}
 }
 \value{
-A list containing data_Sites and data_cluster to be used in the CASTool.
+A list containing formatted timestamped stressor data (data_tsRaw), metadata (data_tsInfo), and identified outliers (data_tsoutliers).
 }
 \description{
-Prepare timestamped stressor data for CASTool
-}
-\details{
-Reviews each uploaded file against both user-input data (either via the shiny app or contained in the CASToolMetadata.xlsx file) to evaluate 1) if the file exists, 2) if it contains the required columns (which requires that they be named correctly), 3) whether datatypes meet requirements.
-
-If any required files do not exist, return the list of missing files and shut down.
-If all required files exist, proceed to internal checks of the columns and data.
-Lastly, perform minimal joins to determine missing values.
-
-dir_data and dir_results should be absolute and not relative paths.
-The function `normalizePath` can be used to convert from relative to absolute path.
+Prepare timestamped stressor data for CASTool. Filter dataset to parameters selected by the user. Identify and (if selected) remove outliers.
 }
 \examples{
 # None at this time

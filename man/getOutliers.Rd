@@ -19,16 +19,17 @@ Dataframe containing sample ID, stressor name, stressor value,
 }
 \description{
 Flags stressor outliers using two methods: 3 times IQR and
-             6 times sd. If both suggest a given value as an outlier, the
+             6 times sd. If either suggest a given value as an outlier, the
              value is identified as an outlier.
 }
 \details{
 In addition to flagging likely outliers (by both 3x IQR and 6X sd),
          this function writes histograms of all untransformed stressors and
          for transformed stressors when transformation is specified in the
-         stressor metadata.
+         stressor metadata. Writes histograms with resolution of 100 rather than
+         default set in config to optimize the size of the results folder.
 
-Uses the libraries dplyr and ggplot2.
+Uses the dplyr library
 }
 \examples{
 # None at this time

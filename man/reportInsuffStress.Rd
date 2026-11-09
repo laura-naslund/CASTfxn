@@ -6,13 +6,25 @@
 \usage{
 reportInsuffStress(
   df_PairedStressResp,
-  list.CompSites,
   bioIndexGp,
-  stress_elim,
   samplim,
   bioComm,
   targMeasStress
 )
+}
+\arguments{
+\item{df_PairedStressResp}{paired stressor response dataset for current biological community}
+
+\item{bioIndexGp}{biological response index for current biological community}
+
+\item{samplim}{minimum number of inside the case samples to analyze the stressor}
+
+\item{bioComm}{current biological community}
+
+\item{targMeasStress}{stressors measured at the target site}
+}
+\value{
+a list with a vector of stressors with insufficient sample numbers and a corresponding gap statement dataframe
 }
 \description{
 Report on stressors with insufficent comparator samples

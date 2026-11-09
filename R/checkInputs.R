@@ -1,14 +1,12 @@
 #' Check input files
 #'
-#' @param dir_uploaded
-#' @param dir_out
-#' @param fn.inputcheck
-#' @param fn.matchups
+#' @param dir_uploaded path to data input directory
+#' @param dir_out path to results directory
+#' @param fn.inputcheck path to input check file
+#' @param fn.matchups path to matchups file
 #'
-#' @return
+#' @return a list containing the two check input dataframes
 #' @export
-#'
-#' @examples
 checkInputs <- function(dir_uploaded,
                         dir_out,
                         fn.inputcheck = system.file("extdata",
@@ -212,7 +210,7 @@ checkInputs <- function(dir_uploaded,
   # Check potential file path lengths ----
   longest_siteid <- data_Sites |>
     dplyr::mutate(char_no = nchar(StationID)) |>
-    dplyr::arrange(desc(char_no)) |>
+    dplyr::arrange(dplyr::desc(char_no)) |>
     dplyr::slice(1) |>
     dplyr::pull(StationID)
 
@@ -265,7 +263,7 @@ checkInputs <- function(dir_uploaded,
                                           sep = "_"),
                                     sep = "/")) |>
     dplyr::mutate(num_char = nchar(file_path)) |>
-    dplyr::arrange(desc(num_char)) |>
+    dplyr::arrange(dplyr::desc(num_char)) |>
     dplyr::filter(num_char > 245)
 
   ### Write region directory
@@ -274,7 +272,7 @@ checkInputs <- function(dir_uploaded,
   }
 
   fp_problem <- file.path(dir_out, region, "Potential_Problem_FilePath.csv")
-  write.csv(prob_fp_df, fp_problem, row.names = FALSE)
+  utils::write.csv(prob_fp_df, fp_problem, row.names = FALSE)
 
   n_problem_fp <- prob_fp_df |>
     nrow()
@@ -289,7 +287,7 @@ checkInputs <- function(dir_uploaded,
 
  # Import data from helper package ----
   if(helperImport == TRUE){
-    conusStates <- setdiff(state.name, c("Alaska", "Hawaii"))
+    conusStates <- setdiff(datasets::state.name, c("Alaska", "Hawaii"))
 
     regionAvailable <- region %in% conusStates
 
@@ -479,32 +477,13 @@ checkInputs <- function(dir_uploaded,
 
 }
 
-#' Title
-#'
-#' @param fk
-#' @param pk
-#'
-#' @return
-#' @export
-#'
-#' @examples
-compare.fk.pk <- function(fk, pk) {
-  if (length(intersect(fk, pk)) != length(fk)) {
-    result <- setdiff(fk, pk)
-  } else {
-    result <- NULL
-  }
-}
-
 #' Compare column names
 #'
-#' @param required
-#' @param actual
+#' @param required names of required columns for a file
+#' @param actual names of columns in a file
 #'
-#' @return
+#' @return a statement about whether required columns are missing
 #' @export
-#'
-#' @examples
 compare.colnames <- function(required, actual) {
   result <- paste0("Missing columns: ", paste(setdiff(required, actual),
                                               collapse = ", "))
@@ -513,13 +492,11 @@ compare.colnames <- function(required, actual) {
 
 #' Compare column types
 #'
-#' @param object
-#' @param required.cols
+#' @param object name of dataframe
+#' @param df.obj dataframe
 #'
-#' @return
+#' @return dataframe describing any column type errors encountered for an imported file
 #' @export
-#'
-#' @examples
 compare.coltypes <- function(object, df.obj) {
 
   text.cols <- c("TargetSiteID", "StationID", "StreamCatVar", "Label",
@@ -611,15 +588,13 @@ compare.coltypes <- function(object, df.obj) {
 
 #' Build relational integrity table
 #'
-#' @param FileOne
-#' @param FileTwo
-#' @param JoinCol
+#' @param FileOne name of first match up file
+#' @param FileTwo name of second match up file
+#' @param JoinCol name of shared parameter to facilitate matchup
+#' @param obj.list list containing imported files
 #'
-#' @return
+#' @return the relational integrity table
 #' @export
-#'
-#' @examples
-#'
 buildRelationalIntegrity <- function(FileOne, FileTwo, JoinCol, obj.list){
 
   FileOne_df <- obj.list[[FileOne]]

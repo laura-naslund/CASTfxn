@@ -2,20 +2,19 @@
 % Please edit documentation in R/getCoOccur.R
 \name{getCoOccur}
 \alias{getCoOccur}
-\title{Co-Occurrence and Sufficiency Lines of Evidence}
+\title{Co-Occurrence Line of Evidence}
 \usage{
 getCoOccur(
   TargetSiteID,
   df_data,
   detects,
   df_stressinfo,
-  compsites,
   biocomm,
   config = NULL,
   colBio,
-  pHlimLow = 5,
+  pHlimLow = 6.5,
   pHlimHigh = 9,
-  DOlim = 6,
+  DOlim = 7,
   plotvars,
   plotdpi = 600,
   plotH = 6,
@@ -29,25 +28,23 @@ getCoOccur(
 )
 }
 \arguments{
-\item{TargetSiteID}{ID of station/sample(s) to plot}
+\item{TargetSiteID}{target site identifier}
 
 \item{df_data}{data frame with paired stressor/response data, where stressor
 data are transformed.}
 
-\item{detects}{all stressors detected in any samples from the target site}
+\item{detects}{stressors detected at the target site with sufficient comparator observations}
 
-\item{df_stressinfo}{dataframe containing stressor metadata (e.g., Label,
-DirIncStress, and other columns from the stressor
-information metadata file).}
+\item{df_stressinfo}{dataframe containing stressor metadata}
 
-\item{compsites}{vector of comparator sites. Defaults to list.CompSites$comp.sites}
+\item{biocomm}{current biological community}
 
-\item{biocomm}{Biological community; fish, algae, or BMI.  Default = "BMI".}
+\item{config}{list containing configuration parameters}
 
 \item{colBio}{df_data column with biological index numeric value.}
 
 \item{pHlimLow}{The lower limit of pH considered to be supportive of a
-biological community. Defaults to pH of 6.5.}
+biological community. Defaults to pH of 6.5}
 
 \item{pHlimHigh}{The upper limit of pH considered to be supportive of a
 biological community. Defaults to pH of 9.}
@@ -56,8 +53,7 @@ biological community. Defaults to pH of 9.}
 biological community. Defaults to 7 mg/L}
 
 \item{plotvars}{Colors, fills, shapes, transparencies for each type (target,
-not degraded, degraded, inside-the-case, outside-the-case).
-Default = data_plotvars.}
+not degraded, degraded, inside-the-case, outside-the-case).}
 
 \item{plotdpi}{DPI for plots for standardization. Default = plot_dpi.  600}
 
@@ -69,57 +65,21 @@ Default = data_plotvars.}
 
 \item{dir_plots}{Directory to save plots.  Default = working directory and Results.}
 
-\item{dir_sub}{Subdirectory for outputs from this function.  Default = "CoOccurrence"}
+\item{dir_sub}{Subdirectory for weight of evidence tables. Default = "_WoE"}
 
 \item{boo_plot}{Boolean value to save plots.  Default = TRUE.}
 
-\item{incaseLabel}{xyz}
+\item{incaseLabel}{name of in-case designation (e.g., ClusterID)}
+
+\item{targetSampleLabels}{boolean to include target sample response labels on figures}
 }
 \value{
-Writes individual plots as pngs, and a tab-delimited text file with
-        scores for each line of evidence (co-occurrence & sufficiency) to a
-        "Results/TargetSiteID/BioComm/CoOccurrence" directory. Returns a list
-        containing 3 elements: a dataframe of stressor metadata corresponding
-        with stressors continuing forward in the analysis, a vector of
-        stressors not continuing forward in the analysis, and a dataframe
-        of all the scores continuing forward.
+Writes individual plots as pngs. Writes co-occurrence scores as csv.
+Returns a list with filtered stressor metadata, stressors that did not pass the
+co-occurence line of evidence screen, dataframe of co-occurrence scores, and gap dataframe.
 }
 \description{
-Generates box plots and and logistic regressions to answer the
-             questions: 1) are the observed stressor levels consistent with
-             impairment where and when it occurs? and 2) are stressor levels
-             sufficient to explain the observed impairment? Also writes a
-             tab-delimited text file containing scores for these two lines of
-             evidence.
-}
-\details{
-\strong{Derive evidence for spatial/temporal co-occurrence.}
-
-Stressor-response from field observational studies: Are higher levels of the
-stressor observed where and when the biological effect occurs?
-
-Box plots are used to show the distribution of the stressor levels at comparator
-sites with better biological condition.  If a site has multiple biological
-condition scores the lowest score is used to determine "better" sites.
-
-Samples are scored:
-
-1. Supports the case for candidate cause.  Stressor levels at the test sites
-are above the 75th percentile of comparator sites having higher biological
-quality.
-
-0. Indeterminate.  Stressor levels at the test site are below the 50th
-percentile of comparator sites having higher biological quality.
-
--1. Weakens the case for the candidate cause.  Stressor levels at the test
-sites are between the 50th and 75th percentile of comparator sites having
-higher biological quality.
-
-Multiple stressors can be used. Stressors for which all target samples are
-scored -1 are not included in further lines of evidence evaluation.
-
-Uses the libraries dplyr, ggplot2, grid, stringr.
-}
-\examples{
-# None at this time
+Compares target sample values to unimpaired, comparator samples.
+Generates line of evidence scores and boxplots.
+Identifies stressors to remove from further consideration.
 }

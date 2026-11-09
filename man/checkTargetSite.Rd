@@ -6,6 +6,15 @@
 \usage{
 checkTargetSite(TargetSiteID, SiteData)
 }
+\arguments{
+\item{TargetSiteID}{target site identifier}
+
+\item{SiteData}{site data}
+}
+\value{
+a dataframe. If target site meets any of the failure conditions in the description, the dataframe indicates which condition.
+}
 \description{
-Check target site
+Identifies whether target site cannot be run because it is NA, not in the sites file, or
+does not have a comparator site (inside-the-case) identifier.
 }

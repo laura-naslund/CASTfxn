@@ -38,7 +38,7 @@ getWSStressData <- function(boo_ws = NULL,
     }
 
   } else if(boo_ws == TRUE & boo_helper == TRUE){
-    conusStates <- setdiff(state.name, c("Alaska", "Hawaii"))
+    conusStates <- setdiff(datasets::state.name, c("Alaska", "Hawaii"))
     regionAvailable <- region %in% conusStates
 
     if(regionAvailable == TRUE){

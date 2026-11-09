@@ -11,6 +11,7 @@
 #' @param comp.reaches COMIDs for comparator reaches
 #' @param TargetCOMID target site COMID
 #' @param useAllCompReaches boolean to use all comparator reaches in watershed stressor analysis
+#' @param config list of configuration parameters
 #' @param useBC boolean to use  biological similarity filter
 #' @param dir_sub subdirectory for outputs from this function.
 #' Default = "SiteInfo"
@@ -153,7 +154,7 @@ getWSStressorFigs <- function(TargetSiteID = TargetSiteID,
       medians_all <- data_compbkgd |>
         dplyr::filter(!is.na(WatershedValue)) |>
         dplyr::group_by(StreamCatVar, Year) |>
-        dplyr::summarize(WatershedValueMedian = median(WatershedValue), .groups = "drop")
+        dplyr::summarize(WatershedValueMedian = stats::median(WatershedValue), .groups = "drop")
 
       for (i in seq_along(vars.site)) { # StreamCatVar (no year--Metric includes year)
         message(paste0("Prepping ", vars.site[i]))
@@ -185,6 +186,7 @@ getWSStressorFigs <- function(TargetSiteID = TargetSiteID,
           if (length(dataYears) > 0) { # Plot data with years
 
             xmin <- min(df.plot.comp$Year)
+            xmax <- max(df.plot.comp$Year)
             numTypes <- length(allRespSampTypes)
             ymax <- max(df.plot.comp$WatershedValue)
             ymin <- min(df.plot.comp$WatershedValue)
@@ -220,8 +222,9 @@ getWSStressorFigs <- function(TargetSiteID = TargetSiteID,
               ggplot2::geom_jitter(data = df.plot.comp, width = 0.1, height = 0,
                                    ggplot2::aes(x = Year, y = WatershedValue),
                                    size = 1, na.rm = TRUE, color = "cyan4") +
-              ggplot2::scale_x_continuous( #limits = c(xmin, xmax),
-                breaks = scales::breaks_width(1)) +
+              # ggplot2::scale_x_continuous( #limits = c(xmin, xmax),
+              #   breaks = scales::breaks_width(1)) +
+              ggplot2::scale_x_continuous(breaks = seq(xmin, xmax, by = 1))+
               ggplot2::labs(title = str_title, subtitle = str_sub) +
               ggplot2::ylab("Watershed Value") +
               ggplot2::theme_classic() +
@@ -286,8 +289,7 @@ getWSStressorFigs <- function(TargetSiteID = TargetSiteID,
                               dpi = plotdpi,
                               width = plotW,
                               height = 1.5 * plotH,
-                              units = plotunits,
-                              device = ragg::agg_png)
+                              units = plotunits)
 
           } else { # no years to consider
 
@@ -339,8 +341,7 @@ getWSStressorFigs <- function(TargetSiteID = TargetSiteID,
                               dpi = plotdpi,
                               width = plotW,
                               height = plotH,
-                              units = plotunits,
-                              device = ragg::agg_png)
+                              units = plotunits)
 
           }## If/else for graphs ends
         }
@@ -378,7 +379,7 @@ getWSStressorFigs <- function(TargetSiteID = TargetSiteID,
     dplyr::select(StreamCatVar, Year, WatershedValueMedian, TargetValue) |>
     dplyr::mutate(WatershedValueMedian = WatershedValueMedian |> round(2) |> format(big.mark = ","),
                   TargetValue = TargetValue |> round(2) |> format(big.mark = ",")) |>
-    dplyr::mutate(across(everything(), as.character))
+    dplyr::mutate(dplyr::across(dplyr::everything(), as.character))
 
   high_stress_ret <- elev_yr |>
     dplyr::bind_rows(elev_no_yr) |>
@@ -394,7 +395,7 @@ getWSStressorFigs <- function(TargetSiteID = TargetSiteID,
 
 #' Get watershed stressor legend
 #'
-#' @param legend type (single year or multiple year)
+#' @param type whether a stressor has data for a single or multiple years
 #'
 #' @return legend grob
 #' @export
@@ -420,11 +421,11 @@ getLegend <- function(type = c("single", "multi")) {
     ggplot2::geom_point(ggplot2::aes(color = label, shape = label), size = 1) +
     ggplot2::scale_color_manual(
       name   = "",
-      values = setNames(legend_items_yrs$color, legend_items_yrs$label)
+      values = stats::setNames(legend_items_yrs$color, legend_items_yrs$label)
     ) +
     ggplot2::scale_shape_manual(
       name   = "",
-      values = setNames(legend_items_yrs$shape, legend_items_yrs$label)
+      values = stats::setNames(legend_items_yrs$shape, legend_items_yrs$label)
     ) +
     ggplot2::guides(
       color = ggplot2::guide_legend(nrow = 1, byrow = TRUE,  override.aes = list(size = 4), reverse = TRUE),  # horizontal

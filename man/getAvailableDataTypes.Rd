@@ -19,13 +19,15 @@ getAvailableDataTypes(
 at the target site, organized by sample date (rows) and
 type (columns)}
 
+\item{df_stress}{stressor data}
+
 \item{biocommlist}{vector of biocommunity data expected.}
 
 \item{dir_results}{Directory containing all results.}
 }
 \value{
 A list containing five boolean values 1) useBMI, 2) useAlg, 3) useFish,
-        4) noStressors, 5) noResponses, and 6) siteDetectsAll.
+        4) noStressors, 5) noResponses, and a vector of available stressor parameters 6) siteDetectsAll.
 }
 \description{
 Identifies which data are available for the target site.

@@ -22,30 +22,30 @@ getVPSSI(
   dir_plots = file.path(getwd(), "Results"),
   dir_sub = "_WoE",
   boo_plot = TRUE,
+  incaseLabel,
   targetSampleLabels = targetSampleLabels
 )
 }
 \arguments{
-\item{TargetSiteID}{Site ID}
+\item{TargetSiteID}{target site identifier}
 
 \item{stressors.ssi}{vector of stressors identified as candidate causes with SSIs}
 
 \item{df_stressinfo}{dataframe of stressor metadata}
 
-\item{df_paired}{list_MatchBioData}
+\item{df_paired}{paired stressor biological response data}
 
-\item{biocomm}{default = "bmi"}
+\item{biocomm}{current biological community}
 
-\item{df_bioMetricData}{dataframe of raw metric data}
+\item{df_bioMetricData}{metric data for the current biological community}
 
-\item{df_bioMetricInfo}{dataframe of metric metadata}
+\item{df_bioMetricInfo}{metric metadata for the current biological community}
 
-\item{colBio}{column containing the overall biological index score}
+\item{config}{list of configuration parameters}
 
-\item{plotvars}{dataframe containing the default plotting variables (color,
-fill, alpha, shape for target, inside the case not degraded,
-inside the case degraded, outside the case not degraded, and
-outside the case degraded)}
+\item{colBio}{index for the current biological community}
+
+\item{plotvars}{plotting parameters}
 
 \item{plotdpi}{standardized plot dpi. Default = 600}
 
@@ -57,20 +57,19 @@ outside the case degraded)}
 
 \item{dir_plots}{default = file.path(getwd(), "Results")}
 
-\item{dir_sub}{default = "VerifiedPredictions"}
+\item{dir_sub}{name of directory to write scores to. Default = "_WoE"}
 
 \item{boo_plot}{= TRUE}
+
+\item{incaseLabel}{label designating a site inside the case}
+
+\item{targetSampleLabels}{boolean to label target response values with sample ID}
 }
 \value{
-Results text file and png files to "Results" "VerifiedPredictions" folder
-in working directory of box plots
+Writes boxplot and logistic regression scores to the _WoE folder.
+Generates associated figures in the corresponding stressor folders.
+Returns scores dataframe.
 }
 \description{
-Get verified predictions.
-}
-\details{
-Required packages: dplyr, ggplot2, grid, stringr, tidyr
-}
-\examples{
-# None at this time
+Conduct stressor specific index analysis
 }

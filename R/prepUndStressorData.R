@@ -4,10 +4,13 @@
 #
 #  R version 4.4.3
 #
+#' @title Prepare undated stressor data for CASTool
+#'
 #' @description Prepare undated stressor data for CASTool
 #'
 #' @details Prepare undated stressor data for CASTool. Filter dataset to parameters selected by the user. Identify and (if selected) remove outliers.
 #'
+#' @param config list of configuration parameters
 #' @param in_dir directory containing checked CASTool data inputs
 #' @param out_dir directory where data outputs are written
 #' @param fn_data name of timestamped stressor rds data file

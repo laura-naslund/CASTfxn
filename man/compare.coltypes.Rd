@@ -6,6 +6,14 @@
 \usage{
 compare.coltypes(object, df.obj)
 }
+\arguments{
+\item{object}{name of dataframe}
+
+\item{df.obj}{dataframe}
+}
+\value{
+dataframe describing any column type errors encountered for an imported file
+}
 \description{
 Compare column types
 }

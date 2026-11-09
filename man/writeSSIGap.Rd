@@ -6,6 +6,12 @@
 \usage{
 writeSSIGap(TargetSiteID)
 }
+\arguments{
+\item{TargetSiteID}{target site identifier}
+}
+\value{
+A gap statement if not SSIs are available
+}
 \description{
 Write gap statement for no SSIs
 }

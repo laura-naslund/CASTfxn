@@ -2,10 +2,22 @@
 % Please edit documentation in R/stressorElimination.R
 \name{reportNoStressResponse}
 \alias{reportNoStressResponse}
-\title{Report on no stressor-response data}
+\title{Report on no stressor or response data at the target site}
 \usage{
 reportNoStressResponse(TargetSiteID, avail_list)
 }
+\arguments{
+\item{TargetSiteID}{target site identifier}
+
+\item{avail_list}{output from the function getAvailableDataTypes}
+}
+\value{
+a gap statement message if there are no stressor-response data at the target site
+}
 \description{
-Report on no stressor-response data
+Report on no stressor or response data at the target site
+}
+\details{
+distinct from reportNoSiteStressResponse which is run from within the biological community loop.
+If this function evaluates noStressors or noResponses to TRUE, the site loop jumps to the next target site.
 }

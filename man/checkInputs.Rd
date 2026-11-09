@@ -11,6 +11,18 @@ checkInputs(
   fn.matchups = system.file("extdata", "CASTool_MatchUps.xlsx", package = "CASTfxn")
 )
 }
+\arguments{
+\item{dir_uploaded}{path to data input directory}
+
+\item{dir_out}{path to results directory}
+
+\item{fn.inputcheck}{path to input check file}
+
+\item{fn.matchups}{path to matchups file}
+}
+\value{
+a list containing the two check input dataframes
+}
 \description{
 Check input files
 }

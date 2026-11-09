@@ -2,10 +2,10 @@
 % Please edit documentation in R/prepRespData.R
 \name{prepRespData}
 \alias{prepRespData}
-\title{prepSiteData}
+\title{Prep biological response data}
 \usage{
 prepRespData(
-  out_dir,
+  file_dir,
   bio,
   loaded,
   useBC,
@@ -15,31 +15,23 @@ prepRespData(
 )
 }
 \arguments{
-\item{out_dir}{directory where all rds files are stored}
+\item{file_dir}{directory containing checked rds files}
 
-\item{bio}{x}
+\item{bio}{biological community indicator}
 
-\item{loaded}{x}
+\item{loaded}{vector of loaded files}
 
-\item{useBC}{x}
+\item{useBC}{boolean to use biological similarity filter for comparator assignment}
 
-\item{bioIndex}{x}
+\item{bioIndex}{name of index used to determine sample degraded/not-degraded status}
 
-\item{calcRelAbund}{x}
+\item{calcRelAbund}{boolean to calculate relative abundance of taxa in count data}
+
+\item{config}{list containing the configuration parameters}
 }
 \value{
-A list containing data_Sites and data_cluster to be used in the CASTool.
+list containing biological response data (data_bioMetrics), metadata (data_bioMetricsInfo), count data (if available, data_bioCounts), count metadata (if available, data_bioMasterTaxa)
 }
 \description{
-Prepare measured stressor data for CASTool
-}
-\details{
-Reviews each uploaded file against both user-input data (either via the shiny app or contained in the CASToolMetadata.xlsx file) to evaluate 1) if the file exists, 2) if it contains the required columns (which requires that they be named correctly), 3) whether datatypes meet requirements.
-
-If any required files do not exist, return the list of missing files and shut down.
-If all required files exist, proceed to internal checks of the columns and data.
-Lastly, perform minimal joins to determine missing values.
-
-dir_data and dir_results should be absolute and not relative paths.
-The function `normalizePath` can be used to convert from relative to absolute path.
+Prep biological response data
 }

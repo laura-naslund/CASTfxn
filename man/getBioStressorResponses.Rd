@@ -24,29 +24,28 @@ getBioStressorResponses(
   plotunits,
   dir_plots,
   dir_sub = "_WoE",
-  boo_pred_warn = TRUE,
   boo_plot = TRUE,
   targetSampleLabels = targetSampleLabels
 )
 }
 \arguments{
-\item{TargetSiteID}{Site ID}
+\item{TargetSiteID}{target site identifier}
 
-\item{df_stressinfo}{stressor metadata for stressors considered candidate
-causes of impairment at the target site}
+\item{df_stressinfo}{metadata for stressors that passed the co-occurrence screen}
 
-\item{df_respinfo}{Bio metric metadata}
+\item{df_respinfo}{biological response metric metadata for the current biological community}
 
-\item{df_respdata}{Biological metric data for all response samples}
+\item{df_respdata}{biological response metric data for the current biological community}
 
-\item{df_datapaired}{dataframe of matched biological response and stressor data.}
+\item{df_datapaired}{paired stressor-response data for the current biological community}
 
-\item{biocomm}{Biological community; algae or BMI.  Default = "BMI".}
+\item{config}{list containing configuration parameters}
 
-\item{bioindex}{Name of the biological index column}
+\item{biocomm}{current biological community}
 
-\item{min_cases}{Minimum number of paired samples; samplim from CASTool_Metadata
-Default = samplim.}
+\item{bioindex}{name of index for current biological community}
+
+\item{min_cases}{minimum number of paired samples to advance stressor through analysis}
 
 \item{p.val_cutoff}{p-value cutoff above which the slope is not considered significant
 Default = 0.05}
@@ -65,31 +64,25 @@ not degraded, degraded, inside-the-case, and outside-the-case)}
 
 \item{plotW}{standardized width for all plots}
 
-\item{plotunits}{stardardized units for all plots}
+\item{plotunits}{standardized units for all plots}
 
-\item{dir_plots}{Directory to save plots. Default = working directory and Results.}
+\item{dir_plots}{directory to save plots}
 
-\item{dir_sub}{Subdirectory for outputs from this function. Default = "StressorResponse"}
-
-\item{boo_pred_warn}{Should warnings for prediction be suppressed. Default = TRUE.}
+\item{dir_sub}{subdirectory for weight of evidence outputs from this function. Default = "_WoE"}
 
 \item{boo_plot}{Boolean value to save plots. Default = TRUE.}
+
+\item{targetSampleLabels}{boolean to label target samples in figures with response sample ID}
 }
 \value{
-Writes one or more graphics depicting stressor-response relationships,
-        a correlation tile plot, and two tab-delimited text files;
-        stressor correlations and scores. Returns a dataframe containing
-        target site scores for inside-the-case and outside-the-case.
+Writes a stressor-response correlation table and table of scores.
+Generates linear regression figures for inside and outside of the case
+as well as a visual depiction of the correlation table. Returns a list containing
+scores for the bioindex and datagaps table.
 }
 \description{
 Use linear regression to evaluate stressor-response gradients
-             inside the case or outside the case.
-}
-\details{
-Biological (BMI, Algae, or Fish) stressor linear regressions.
+             inside the case and outside the case.
 
 Requires packages dplyr, ggplot2, stringr, tidyr
-}
-\examples{
-# None at this time
 }

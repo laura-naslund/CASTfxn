@@ -51,6 +51,7 @@
 #' @param data_fishMetrics description
 #' @param data_stressInfo description
 #' @param siteDetectsAll x
+#' @param dn_checked_sk name of directory containing checked files
 #'
 #'
 # @param probsHigh Default = 0.75
@@ -105,9 +106,6 @@ getReport <- function(TargetSiteID,
                       siteDetectsAll,
                       dn_checked_sk
                       ) { ##FUNCTION.START
-  # Global Bindings
-  #biocommlist <- regionName <- fn.cluster <- NULL
-
   # Debug
   boo_DEBUG <- FALSE
   DEBUG_person <- "Ann"
@@ -141,7 +139,6 @@ getReport <- function(TargetSiteID,
       dir_results = normalizePath(file.path(".", "Results"))
       dir_rmd = file.path(system.file(package = "CASTfxn"), "rmd")
     }
-    # siteQual2Plot = NULL
   }## IF ~ boo_DEBUG ~ END
 
   # Date and Time for output
@@ -154,7 +151,6 @@ getReport <- function(TargetSiteID,
   #
   # Report parts
   strFile_RMD <- file.path(dir_rmd, paste0("Report_Results_", report_type, ".rmd"))
-  # strFile_RMD <- NULL
   strFile_out_ext <- paste0(".", ifelse(report_format == "word", "docx", report_format)) #".docx" # ".html"
   strFile_out_RMD <- paste0(paste(TargetSiteID, "Results", myDate, myTime,
                                   "FromRMD", sep = "_"), strFile_out_ext)
@@ -188,7 +184,6 @@ getReport <- function(TargetSiteID,
                                     bmiIndex       = bmiIndex,
                                     algIndex       = algIndex,
                                     fishIndex      = fishIndex,
-                                    #clusterfile    = basename(fn.cluster),
                                     dir_results    = dir_results,
                                     boo.WS         = boo.WS,
                                     dn_checked_sk = dn_checked_sk),
@@ -196,23 +191,18 @@ getReport <- function(TargetSiteID,
   } else {
     Msg.Line0 <- "~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
     Msg.Line1 <- "Provided report template file directory does not include the necessary RMD file to generate the report.  So no report will be generated."
-    #Msg.Line2 <- "The default report directory can be modified in config.R (ContData.env$myReport.Dir) and used as input to the function (fun.myConfig)."
     Msg.Line3 <- paste0("file = ", basename(strFile_RMD))
     Msg.Line4 <- paste0("directory = ", dir_rmd)
     Msg <- paste(Msg.Line0, Msg.Line1
                  #, Msg.Line2
                  , Msg.Line3, Msg.Line4, Msg.Line0, sep = "\n\n")
     message(Msg)
-    # cat(Msg)
-    # utils::flush.console()
   }##IF.file.exists.END
   #
   # User Feedback
   message("Task COMPLETE.  Report generated.")
   message(paste0("    User defined parameters: SiteID (", TargetSiteID, "), Report Type ("
                , report_type, "), Report Format (", report_format, ")."))
-  #utils::flush.console()
-  #
 }##FUNCTION.END
 
 

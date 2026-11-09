@@ -6,6 +6,12 @@
 \usage{
 writeSSTVGap(TargetSiteID)
 }
+\arguments{
+\item{TargetSiteID}{target site identifier}
+}
+\value{
+gap statement if not stressors have SSTVs
+}
 \description{
 Write gap statement when there are no SSTVs
 }

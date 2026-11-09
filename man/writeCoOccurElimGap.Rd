@@ -6,6 +6,14 @@
 \usage{
 writeCoOccurElimGap(TargetSiteID, bioComm)
 }
+\arguments{
+\item{TargetSiteID}{target site identifier}
+
+\item{bioComm}{biological community}
+}
+\value{
+a list with a gap statement and site status statement
+}
 \description{
 Write gap statement when co-occurrence eliminates all candidate causes
 }

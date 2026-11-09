@@ -18,32 +18,32 @@ setUpRConsole <- function(
     install_missing = TRUE,
     load_local = TRUE
 ) {
-  # Check/install remotes
-  if (!requireNamespace("remotes", quietly = TRUE)) {
-    if (install_missing) {
-      install.packages("remotes")
-    } else {
-      stop("Package 'remotes' is required but not installed.")
-    }
-  }
+  # # Check/install remotes
+  # if (!requireNamespace("remotes", quietly = TRUE)) {
+  #   if (install_missing) {
+  #     install.packages("remotes")
+  #   } else {
+  #     stop("Package 'remotes' is required but not installed.")
+  #   }
+  # }
+  #
+  # # Check/install CASToolHelperPckg
+  # if (!requireNamespace("CASToolHelperPckg", quietly = TRUE)) {
+  #   if (install_missing) {
+  #     message("Installing CASToolHelperPckg")
+  #     remotes::install_github("laura-naslund/CASToolHelperPckg")
+  #   } else {
+  #     stop("Package 'CASToolHelperPckg' is required but not installed.")
+  #   }
+  # }
 
-  # Check/install CASToolHelperPckg
-  if (!requireNamespace("CASToolHelperPckg", quietly = TRUE)) {
-    if (install_missing) {
-      message("Installing CASToolHelperPckg")
-      remotes::install_github("laura-naslund/CASToolHelperPckg")
-    } else {
-      stop("Package 'CASToolHelperPckg' is required but not installed.")
-    }
-  }
+  # # Load helper package
+  # library(CASToolHelperPckg)
 
-  # Load helper package
-  library(CASToolHelperPckg)
-
-  # Load local package/functions if requested
-  if (load_local) {
-    devtools::load_all()
-  }
+  # # Load local package/functions if requested
+  # if (load_local) {
+  #   devtools::load_all()
+  # }
 
   # Return setup values
   return(list(

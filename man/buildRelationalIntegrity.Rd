@@ -6,6 +6,18 @@
 \usage{
 buildRelationalIntegrity(FileOne, FileTwo, JoinCol, obj.list)
 }
+\arguments{
+\item{FileOne}{name of first match up file}
+
+\item{FileTwo}{name of second match up file}
+
+\item{JoinCol}{name of shared parameter to facilitate matchup}
+
+\item{obj.list}{list containing imported files}
+}
+\value{
+the relational integrity table
+}
 \description{
 Build relational integrity table
 }

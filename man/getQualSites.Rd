@@ -18,11 +18,11 @@ getQualSites(
 )
 }
 \arguments{
-\item{TargetSiteID}{Site ID}
+\item{TargetSiteID}{Target site identifier}
 
 \item{biocomm}{Biological community; fish, algae or BMI.  Default = "BMI".}
 
-\item{df_qual}{Biological index data for the specified biocomm.}
+\item{df_qual}{Paired stressor-response data for the relevant biological cmmunity.}
 
 \item{colBio}{Name of the column for the biological response index measure.}
 
@@ -32,7 +32,7 @@ getQualSites(
 
 \item{refSites}{Vector containing all reference site identifiers.}
 
-\item{stressors}{Vector containing}
+\item{stressors}{Vector containing standard parameter name o stressors measured at the target site}
 
 \item{dir_results}{directory for results; Default = file.path(getwd(), "Results").}
 

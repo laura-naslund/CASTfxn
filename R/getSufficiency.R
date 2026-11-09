@@ -129,13 +129,13 @@ getSufficiency <- function(TargetSiteID,
   # Get dataset
   df_resp <- df_resp |>  # will need to edit this if df_resp isn't filtered by user selection
     dplyr::select("StationID", "RespSampleID", "RespSampleDate", dplyr::all_of(responses)) |>
-    tidyr::pivot_longer(cols = all_of(responses), names_to = "Response", values_to = "ResponseValue")
+    tidyr::pivot_longer(cols = dplyr::all_of(responses), names_to = "Response", values_to = "ResponseValue")
 
   df_data <- df_data |>
     dplyr::filter(IncaseYN == 1) |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
                   RespSampleDate, Quality, dplyr::all_of(stressors)) |>
-    tidyr::pivot_longer(cols = all_of(stressors), names_to = "Stressor", values_to = "StressorValue") |>
+    tidyr::pivot_longer(cols = dplyr::all_of(stressors), names_to = "Stressor", values_to = "StressorValue") |>
     dplyr::left_join(df_resp, by = c("StationID", "RespSampleID", "RespSampleDate"))
 
 
@@ -314,7 +314,7 @@ getSufficiency <- function(TargetSiteID,
 
   # Save scores file
   fn.scores <- file.path(dir_path, paste0(TargetSiteID, "_", biocomm, "_Suff_Scores.csv"))
-  write.csv(suff_score, file = fn.scores, row.names = FALSE)
+  utils::write.csv(suff_score, file = fn.scores, row.names = FALSE)
 
   df.scores <- suff_score |>
     dplyr::filter(Response == colBio) |>
@@ -335,15 +335,13 @@ getSufficiency <- function(TargetSiteID,
 
 #' Assign quality to biological metric value
 #'
-#' @param bioIndex.Inc inclusive indicator of quality cutoff for a biological metric (<, >, <=, >=)
-#' @param bioIndex.dir direction of stressor gradient (Inc, Dec)
-#' @param bioIndex.cutval cutoff value for biological metric quality
-#' @param bioIndex metric
+#' @param metric_ind inclusive indicator of quality cutoff for a biological metric (<, >, <=, >=)
+#' @param metric_dir direction of stressor gradient (Inc, Dec)
+#' @param metric_cutval cutoff value for biological metric quality
+#' @param metric metric
 #'
-#' @return
+#' @return quality label associated with a biological metric value
 #' @export
-#'
-#' @examples
 qualityAssign <- function(metric_ind, metric_dir, metric_cutval, metric){
   if (metric_ind == "\u2264" | metric_ind == "<=") {
     if (metric_dir == "Dec") {

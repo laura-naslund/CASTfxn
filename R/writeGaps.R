@@ -1,9 +1,10 @@
 #' Write gap statement when co-occurrence eliminates all candidate causes
 #'
-#' @return
-#' @export
+#' @param TargetSiteID target site identifier
+#' @param bioComm biological community
 #'
-#' @examples
+#' @return a list with a gap statement and site status statement
+#' @export
 writeCoOccurElimGap <- function(TargetSiteID, bioComm){
   msg <- paste0("No candidate causes to evaluate further for ",
                 TargetSiteID, " for the ", bioComm, " community.")

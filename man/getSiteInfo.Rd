@@ -20,16 +20,10 @@ getSiteInfo(
   all.sites,
   IncaseLabel = NULL,
   OutcaseLabel = NULL,
-  useBC = FALSE,
   config = NULL,
+  useBC = FALSE,
   plotvars,
-  refSiteCol,
-  plotdpi,
-  plotH,
-  plotW,
-  plotunits,
-  dir_photo = file.path(getwd(), "Data", "Photos"),
-  dir_results = file.path(getwd(), "Results"),
+  dir_photo = NULL,
   dir_sub = "SiteInfo",
   boo_plot = TRUE
 )
@@ -37,7 +31,7 @@ getSiteInfo(
 \arguments{
 \item{TargetSiteID}{site identifier for the site being evaluated (the Target Site)}
 
-\item{TargetCOMID}{x}
+\item{TargetCOMID}{comid for the target site reach}
 
 \item{df_Sites}{dataframe containing site data, including "inside the case"
 and "outside the case" identifiers. If useBC == TRUE, "outside the case" will
@@ -50,16 +44,16 @@ at the target site, organized by sample date (rows) and type (columns)}
 
 \item{df_BMIMetrics}{dataframe containing BMI sample index and metric values}
 
-\item{BMIIndexGp}{vector containing one or more BMI indices for display purpose only}
+\item{BMIIndexGp}{BMI index}
 
 \item{df_ALGMetrics}{dataframe containing algae sample index and metric values.
 Default is NULL.}
 
-\item{ALGIndexGp}{vector containing one or more algal indices for display purpose only}
+\item{ALGIndexGp}{algal index}
 
 \item{df_FishMetrics}{dataframe containing fish sample index and metric values}
 
-\item{FishIndexGp}{vector containing one or more fish indices for display purpose only}
+\item{FishIndexGp}{fish index}
 
 \item{comp.sites}{vector containing inside-the-case (comparator) site IDs}
 
@@ -69,46 +63,23 @@ Default is NULL.}
 
 \item{OutcaseLabel}{Label for the "outside the case" identifier. Default = NULL.}
 
+\item{config}{list containing configuration parameters}
+
 \item{useBC}{TRUE to use biological similarity; FALSE to not use. Default = FALSE.}
 
 \item{plotvars}{Colors, fills, shapes, transparencies for each type (target,
-not degraded, degraded, inside-the-case, outside-the-case). Default = data_plotvars.}
-
-\item{refSiteCol}{Default color outline for reference sites, used for standardization.
-Default = refOutline_col.}
-
-\item{plotdpi}{Default dpi for plots, used for standardization.
-Default = plot_dpi. 600}
-
-\item{plotH}{Default height for plots, used for standardization.
-Default = plot_H. 6}
-
-\item{plotW}{Default width for plots, used for standardization.
-Default = plot_W. 8}
-
-\item{plotunits}{Default units for plots, used for standardization.
-Default = plot_units. "in"}
+not degraded, degraded, inside-the-case, outside-the-case).}
 
 \item{dir_photo}{directory containing all site photos (for every site in the data set).
 Default is file.path(getwd(), "Data", "Photos").}
-
-\item{dir_results}{Directory containing all results. Default is file.path(getwd(),"Results").}
 
 \item{dir_sub}{Subdirectory for outputs from this function. Default = "SiteInfo".}
 
 \item{boo_plot}{Boolean value to save plots. Default = TRUE.}
 }
 \value{
-A list containing a dataframe of site information (site ID, geographic
-        coordinates, waterbody name, county name, reach identifier, cluster
-        identifier, and reference site flag); a dataframe of any samples obtained
-        from the site location by sample date; a dataframe of bmi response
-        indices and metric values; a dataframe of algae response indices and
-        metric values; the reach identifier for the target site location; the
-        cluster identifier for the target site; and a vector of reference reaches.
-        Also outputs graphics depicting background variables by category,
-        response indices, and tabular site background data. Creates a subfolder
-        for site photos within the directory "~/Results/TargetSiteID/SiteInfo".
+A list containing a gaps dataframe of gaps encountered in generating the biological index boxplots and site photos.
+Writes biological index boxplots and site photos (if available) to SiteInfo folder
 }
 \description{
 Get site info of provided siteID.

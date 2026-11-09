@@ -25,6 +25,7 @@
 #' @param dir_plots directory to save plots
 #' @param dir_sub name of directory to save scores. Default = "_WoE"
 #' @param boo_plot boolean to save plots
+#' @param targetSampleLabels boolean to label target samples in plots with response sample identifier
 #'
 #' @return Writes stressor specific tolerance value scores for target site samples
 #' and saves associated boxplots.
@@ -139,7 +140,7 @@ getVerifiedPredictions <- function(TargetSiteID,
   # Give labels to master taxa
   df_mt_sstv <- df_MasterTaxa |>
     dplyr::select(TaxonID, dplyr::all_of(sstvs)) |>
-    dplyr::mutate(dplyr::across(everything(), as.character)) |>
+    dplyr::mutate(dplyr::across(dplyr::everything(), as.character)) |>
     tidyr::pivot_longer(cols = !TaxonID, names_to = "SSTVname")|>
     dplyr::left_join(df_sstvinfo, by = "SSTVname") |>
     dplyr::mutate(Sensitivity = dplyr::case_when(
@@ -206,7 +207,7 @@ getVerifiedPredictions <- function(TargetSiteID,
                   RespSampleDate, BioComm, bioIndexName, bioIndex, Quality,
                   dplyr::all_of(stressors.sstv)) |>
     tidyr::pivot_longer(cols = dplyr::all_of(stressors.sstv), names_to = "Stressor", values_to = "StressorValue") |>
-    dplyr::left_join(df_stressinfo |> dplyr::select(Stressor, Label, "SSTVname" = all_of(paste0("SSTVname.", biocomm_lwr))), by = "Stressor")
+    dplyr::left_join(df_stressinfo |> dplyr::select(Stressor, Label, "SSTVname" = dplyr::all_of(paste0("SSTVname.", biocomm_lwr))), by = "Stressor")
 
   df_target_score_sum <- df_target_score |>
     dplyr::group_by(RespSampleID, SSTVname) |>
@@ -220,7 +221,7 @@ getVerifiedPredictions <- function(TargetSiteID,
   fn_scores <-  file.path(dir.path, paste0(TargetSiteID, "_", biocomm,
                                            "_VP_SSTV_Scores.csv"))
 
-  write.csv(df_target_score |> dplyr::select(-max), fn_scores, row.names = FALSE)
+  utils::write.csv(df_target_score |> dplyr::select(-max), fn_scores, row.names = FALSE)
 
   # Plot
   for(i in seq_along(stressors.sstv)){
@@ -278,12 +279,17 @@ assignSens <- function(sens_input, sstv, df_MasterTaxa){
 #' @param TargetSiteID target site identifier
 #' @param stressorLabel stressor label associated with the current sstv
 #' @param sstv current stressor specific tolerance value
+#' @param stressor current stressor
 #' @param biocomm current biological community
 #' @param colBio name of the index for the current biological community
 #' @param data_comp dataframe of sensitivity metric values or comparator samples
-#' @param df_target_score dataframe with target sample SSTV scores
+#' @param data_targ dataframe with target sample SSTV scores
 #' @param boo_plot boolean to generate figures
 #' @param plot.path path to save plots
+#' @param plotdpi plot resolution
+#' @param plotW plot width
+#' @param plotH plot height
+#' @param plotunits plot units
 #'
 #' @return No return. Saves SSTV plot to results folder
 #' @export

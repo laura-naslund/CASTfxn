@@ -101,6 +101,8 @@ getReport(
 \item{data_stressInfo}{description}
 
 \item{siteDetectsAll}{x}
+
+\item{dn_checked_sk}{name of directory containing checked files}
 }
 \value{
 A report for the provided SiteID in the provided format (html or word)

@@ -75,8 +75,8 @@ if (cfg$boo_shiny == TRUE) {
   list.Tables <- checkInputs(dir_uploaded = cfg$in_dir,
                              dir_out = cfg$out_dir)
 
-  write.csv(list.Tables$TableOne, file.path(cfg$out_dir, cfg$region, "TableOne.csv"), row.names = FALSE)
-  write.csv(list.Tables$TableTwo, file.path(cfg$out_dir, cfg$region, "TableTwo.csv"), row.names = FALSE)
+  utils::write.csv(list.Tables$TableOne, file.path(cfg$out_dir, cfg$region, "TableOne.csv"), row.names = FALSE)
+  utils::write.csv(list.Tables$TableTwo, file.path(cfg$out_dir, cfg$region, "TableTwo.csv"), row.names = FALSE)
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~
@@ -766,14 +766,14 @@ for (site in seq_len(nrow(df_targets))) {
                        dplyr::select(StdParamName, Label),
                      by = c("Stressor" = "StdParamName"))
 
-  write.csv(df_stressorElim,
+  utils::write.csv(df_stressorElim,
             file.path(dir_results,
                       TargetSiteID,
                       paste0(TargetSiteID,
                              "_StressorsEliminated.csv")),
             row.names = FALSE)
 
-  write.csv(list.StressorElim$df_initialStress,
+  utils::write.csv(list.StressorElim$df_initialStress,
             file.path(dir_results,
                       TargetSiteID,
                       paste0(TargetSiteID,
@@ -789,7 +789,7 @@ for (site in seq_len(nrow(df_targets))) {
   }
 
 
-  write.csv(responsesOutput,
+  utils::write.csv(responsesOutput,
             file.path(dir_results,
                       TargetSiteID,
                       paste0(TargetSiteID,
@@ -902,7 +902,7 @@ for (site in seq_len(nrow(df_targets))) {
     dplyr::bind_rows(tryCatch(list.StressorElim$gap_no_sr, error = function(e) NULL)) |>
     dplyr::bind_rows(tryCatch(list.StressorElim$gap_no_site_sr, error = function(e) NULL))
 
-  write.csv(gaps, file.path(dir_results,
+  utils::write.csv(gaps, file.path(dir_results,
                                 TargetSiteID,
                                 paste0(TargetSiteID, "_datagaps.csv")),
               row.names = FALSE)
@@ -919,7 +919,7 @@ fn_status <- file.path(dir_results,
                               "_",
                               format(Sys.time(),"%H%M%S"),
                               ".csv"))
-write.csv(status_df,
+utils::write.csv(status_df,
           fn_status,
           row.names = FALSE)
 

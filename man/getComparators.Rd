@@ -27,7 +27,7 @@ getComparators(
 \arguments{
 \item{TargetSiteID}{Site ID for the site being evaluated}
 
-\item{df_sites}{Sites table with cluster membership. Default = "data_Sites".}
+\item{df_sites}{Sites table with cluster membership.}
 
 \item{df_cluster}{Dataframe containing reach IDs and their associated clusters}
 
@@ -67,11 +67,9 @@ target site. Default = "0.05".}
 \item{dir_sub}{Subdirectory for outputs from this function. Default = "SiteInfo"}
 }
 \value{
-A list containing 1) a vector of comparator site identifiers (comp.sites),
-        2) a vector of all sites representing "outside the case", and 3) a dataframe
-        containing gap details (function name, condition, result, and comment);
-        and a tab-delimited text file containing the list of comparator sites with
-        additional information relating to their similarity to the target site.
+A list containing a vector of comparator site identifiers (comp.sites), comparator reaches,
+        noncomparator site identifiers, noncomparator reaches, and a dataframe
+        containing gap details associated with the biological dissimilarity filter (if used)
 }
 \description{
 Generates a list of comparator sites for the target site.

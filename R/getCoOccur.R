@@ -168,7 +168,7 @@ getCoOccur <- function(TargetSiteID,
   # Score target site samples
   df.scores <- df_data |>
     dplyr::filter(StationID == TargetSiteID) |>
-    tidyr::pivot_longer(cols = all_of(detects), names_to = "Stressor", values_to = "StressorValue") |>
+    tidyr::pivot_longer(cols = dplyr::all_of(detects), names_to = "Stressor", values_to = "StressorValue") |>
     dplyr::left_join(df.stats, by = "Stressor") |>
     dplyr::mutate(Sc_Box = dplyr::case_when(
       (Stressor == "pH_low" & StressorValue < pHlimLow) ~ 1,
@@ -328,7 +328,7 @@ getCoOccur <- function(TargetSiteID,
 
   # Write scores file ####
   fn.scores <- file.path(dir_path, paste0(TargetSiteID, "_", biocomm, "_CO_Scores.csv"))
-  write.csv(df.scores, file = fn.scores, row.names = FALSE)
+  utils::write.csv(df.scores, file = fn.scores, row.names = FALSE)
 
   # Write gaps
   ## Defining notstressors in two steps is necessary to retain stressors with at least one score 0 or 1

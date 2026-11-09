@@ -2,10 +2,19 @@
 % Please edit documentation in R/stressorElimination.R
 \name{getInitialStressors}
 \alias{getInitialStressors}
-\title{Title}
+\title{Get initial list of stressors considered}
 \usage{
 getInitialStressors(stress_info, stress_data)
 }
+\arguments{
+\item{stress_info}{stressor metadata}
+
+\item{stress_data}{stressor data}
+}
+\value{
+a list with a vector of all stressors initially considered (those with observations and selected by the user)
+and a dataframe crosswalking those parameter names and labels
+}
 \description{
-Title
+Get initial list of stressors considered
 }

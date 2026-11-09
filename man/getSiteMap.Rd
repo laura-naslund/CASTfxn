@@ -23,15 +23,15 @@ getSiteMap(
 )
 }
 \arguments{
-\item{sp_outline}{Spatial dataframe representing region (or subregion) boundary.}
+\item{sp_outline}{Spatial object representing region (or subregion) boundary.}
 
-\item{sp_flowline}{Spatial dataframe representing stream reaches *MUST* include
-inside-the-case ID; may include outside-the-case ID.}
+\item{sp_flowline}{Spatial object representing stream reaches *MUST* include inside-the-case ID; may include outside-the-case ID.}
 
-\item{region}{Region or regulatory organization to which the data apply
-(e.g., AZ, SMC, WA, OR)}
+\item{config}{list of configuration parameters}
 
-\item{datum}{x}
+\item{region}{analysis region}
+
+\item{datum}{datum associated with site coordinates}
 
 \item{df_sites}{dataframe containing site data, including both "inside the case"
 and "outside the case" identifiers.}

@@ -19,14 +19,14 @@ getVerifiedPredictions(
   plotH = 6,
   plotW = 8,
   plotunits = "in",
-  dir_plots = file.path(getwd(), "Results"),
+  dir_plots,
   dir_sub = "_WoE",
   boo_plot = TRUE,
   targetSampleLabels = targetSampleLabels
 )
 }
 \arguments{
-\item{TargetSiteID}{Site ID}
+\item{TargetSiteID}{target site identifier}
 
 \item{stressors.sstv}{vector of stressors with stressor-specific tolerance values}
 
@@ -34,16 +34,17 @@ getVerifiedPredictions(
 
 \item{df_paired}{dataframe of paired stressor-response samples}
 
-\item{biocomm}{default = "bmi"}
+\item{biocomm}{current biological community}
 
-\item{df_bioTaxaData}{dataframe of raw response data (counts or relative abundance)}
+\item{df_bioTaxaData}{dataframe of relative abundance}
 
 \item{df_MasterTaxa}{dataframe of master taxa with SSTV values determined for individual taxa}
 
-\item{colBio}{default = "IBI"}
+\item{config}{list of configuation parameters}
 
-\item{plotvars}{Standardized sizes, fills, shapes, and transparencies for plots.
-Defaults to data_plotvars}
+\item{colBio}{name of index for the current biological community}
+
+\item{plotvars}{Standardized sizes, fills, shapes, and transparencies for plots.}
 
 \item{plotdpi}{Standardized plot dpi. Defaults to plot_dpi. 600}
 
@@ -53,22 +54,18 @@ Defaults to data_plotvars}
 
 \item{plotunits}{Standardized plot units. Defaults to plot_units. "in"}
 
-\item{dir_plots}{default = file.path(getwd(), "Results")}
+\item{dir_plots}{directory to save plots}
 
-\item{dir_sub}{default = "VerifiedPredictions"}
+\item{dir_sub}{name of directory to save scores. Default = "_WoE"}
 
-\item{boo_plot}{= TRUE}
+\item{boo_plot}{boolean to save plots}
+
+\item{targetSampleLabels}{boolean to label target samples in plots with response sample identifier}
 }
 \value{
-Results text file and png files to "Results" "VerifiedPredictions" folder
-in working directory of box plots
+Writes stressor specific tolerance value scores for target site samples
+and saves associated boxplots.
 }
 \description{
-Get verified predictions.
-}
-\details{
-Required packages: dplyr, forcats, ggplot2, grid, stringr, tidyr
-}
-\examples{
-# None at this time
+Run the stressor-specific tolerance values line of evidence
 }

@@ -16,6 +16,7 @@
 #' @param df_respinfo biological response metric metadata for the current biological community
 #' @param df_respdata biological response metric data for the current biological community
 #' @param df_datapaired paired stressor-response data for the current biological community
+#' @param config list containing configuration parameters
 #' @param biocomm current biological community
 #' @param bioindex name of index for current biological community
 #' @param min_cases minimum number of paired samples to advance stressor through analysis
@@ -33,6 +34,7 @@
 #' @param dir_sub subdirectory for weight of evidence outputs from this function. Default = "_WoE"
 #' @param dir_plots directory to save plots
 #' @param boo_plot Boolean value to save plots. Default = TRUE.
+#' @param targetSampleLabels boolean to label target samples in figures with response sample ID
 #'
 #' @return Writes a stressor-response correlation table and table of scores.
 #' Generates linear regression figures for inside and outside of the case
@@ -248,7 +250,7 @@ getBioStressorResponses <- function(TargetSiteID,
                                    n = nrow(df_CompData_sr),
                                    statistic = sr_inside_mod$tval,
                                    p.value = sr_inside_mod$pvalue,
-                                   estimate = cor(score_sr_inside$data$Stressor, score_sr_inside$data$Response) |> round(2),
+                                   estimate = stats::cor(score_sr_inside$data$Stressor, score_sr_inside$data$Response) |> round(2),
                                    r2 = sr_inside_mod$r2)
 
           df.CorrTable <- dplyr::bind_rows(df.CorrTable, df.corr.sr)
@@ -302,8 +304,8 @@ getBioStressorResponses <- function(TargetSiteID,
 
   bioStrCorrPlot(TargetSiteID, df.CorrTable, dir_path, plotW, plotH, plotunits, plotdpi, biocomm)
 
-  write.csv(df.CorrTable, fp_corr, row.names = FALSE)
-  write.csv(df.sc, fp_scores, row.names = FALSE)
+  utils::write.csv(df.CorrTable, fp_corr, row.names = FALSE)
+  utils::write.csv(df.sc, fp_scores, row.names = FALSE)
 
   df_SiteData_join <- df_SiteData |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
@@ -392,6 +394,10 @@ bioStrRespScore <- function(data, type = c("inside", "outside"),  p.val_cutoff, 
 #' @param height plot height
 #' @param units plot units
 #' @param dpi plot resolution
+#' @param boo_plot boolean to save plots
+#' @param dir_path_stress path to current stressor directory
+#' @param plotvars dataframe of plotting parameters
+#' @param biocomm current biological community
 #'
 #' @return Saves plots. No return.
 #' @export
@@ -497,10 +503,12 @@ bioStrRspPlot <- function(data, site_data, type = c("inside", "outside"), stress
 #' @param df_NotCompData_sr outside the case paired stressor response data filtered to current stressor and response
 #' @param stressName current stressor name
 #' @param respName current response name
+#' @param min_cases minimum number of inside-the-case paired observations required to consider a stressor
 #'
-#' @return
-#' @export Returns list with gap statement dataframe and boolean indicators of
+#' @return a list with gap statement dataframe and boolean indicators of
 #' to evaluate biological gradient line of evidence for inside and outside the case.
+#'
+#' @export
 bioStrRspGaps <- function(df_CompData_sr, df_NotCompData_sr, stressName, respName, min_cases){
   n_inside <- nrow(df_CompData_sr)
   n_outside <- nrow(df_NotCompData_sr)
@@ -576,6 +584,7 @@ bioStrRspGaps <- function(df_CompData_sr, df_NotCompData_sr, stressName, respNam
 #' @param height plot height
 #' @param units plot units
 #' @param dpi plot resoltuion
+#' @param biocomm current biological community
 #'
 #' @return Saves correlation plot. No return
 #' @export

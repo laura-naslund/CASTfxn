@@ -2,7 +2,7 @@
 % Please edit documentation in R/getCoOccurDataset.R
 \name{getCoOccurDataset}
 \alias{getCoOccurDataset}
-\title{Get Matching Stressor-Response Data}
+\title{Get paired stressor-response dataset}
 \usage{
 getCoOccurDataset(
   df_sites,
@@ -14,40 +14,21 @@ getCoOccurDataset(
 )
 }
 \arguments{
-\item{df_sites}{Dataframe containing site data for all sites.}
+\item{df_sites}{sites data containing site COMID, comparator assignment, and reference status}
 
-\item{df_stress}{Dataframe containing measured or modeled stressor data
-for all sites that have them.}
+\item{df_stress}{stressor data in long format}
 
-\item{biocomm}{Biological community; algae or BMI.}
+\item{biocomm}{biological community indicator}
 
-\item{df_resp}{Dataframe containing biological response metrics.}
+\item{df_resp}{biological repsonse data}
 
-\item{index}{Name of the response index column.}
+\item{index}{biological data}
 
-\item{lagdays}{c(before, after). The number of days allowed between the
-stressor sample date and the response sample date, before and after.
-Default = c(0, 0) (same day).}
+\item{lagdays}{days before and after biological response observation to which a stressor observation can be matched}
 }
 \value{
-A dataframe containing matched stressor response data based on
-a stressor sample obtained between lagdays before and lagdays after the
-response sample was obtained. Result values are *not* transformed.
+dataframe with paired stressor-response observations and comparator site indicator
 }
 \description{
-Prepare matched stressor/response data as a single dataframe
+Get paired stressor-response dataset
 }
-\details{
-Generates a dataframe and writes a table with stressor and response
-data for all stressor and response samples obtained within a specified time
-of each other. User specified lag time between stressor sample (prior) and
-response sample (after) may be employed, with a default of same day samples.
-
-Improvements: Add BioDegLab and BioNarLab?
-
-Uses the libraries dplyr, fuzzyjoin, and tidyr.
-}
-\examples{
-# None at this time 
-}
-\keyword{internal}

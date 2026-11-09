@@ -6,6 +6,14 @@
 \usage{
 writeMissingSSIGap(index, bioComm)
 }
+\arguments{
+\item{index}{stressor specific index}
+
+\item{bioComm}{applicable biological community}
+}
+\value{
+gap statement if an SSI is listed in the stressor metadata but not included in biological response data
+}
 \description{
 Write gap statement for SSI missing from inclusion in response metadata
 }

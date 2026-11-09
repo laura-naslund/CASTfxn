@@ -23,8 +23,8 @@
 #' and both inside/outside the case reference sites outlined in dark blue.
 #'
 #' @param sp_outline Spatial object representing region (or subregion) boundary.
-#' @param sp_flowline Spatial object representing stream reaches *MUST* include
-#'                    inside-the-case ID; may include outside-the-case ID.
+#' @param sp_flowline Spatial object representing stream reaches *MUST* include inside-the-case ID; may include outside-the-case ID.
+#' @param config list of configuration parameters
 #' @param region analysis region
 #' @param datum datum associated with site coordinates
 #' @param df_sites dataframe containing site data, including both "inside the case"

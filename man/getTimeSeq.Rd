@@ -7,8 +7,8 @@
 getTimeSeq(
   TargetSiteID,
   biocomm,
-  bioindex,
   config = NULL,
+  colBio,
   df_stress,
   df_resp,
   df_respinfo,
@@ -24,22 +24,22 @@ getTimeSeq(
 )
 }
 \arguments{
-\item{TargetSiteID}{site identifier for the site being evaluated (the Target Site)}
+\item{TargetSiteID}{target site identifier}
 
 \item{biocomm}{biological response community (bmi, algae, or fish)}
 
-\item{bioindex}{the column name containing the biological index value}
+\item{config}{list containing configuration parameters}
 
-\item{df_stress}{dataframe containing all target site stressors, regardless of matching status.}
+\item{df_stress}{dataframe containing all stressor data}
 
 \item{df_resp}{dataframe containing the target site biological response samples'
-index and metric values, regardless of matching status}
+index and metric values}
 
-\item{df_respinfo}{dataframe containing response metadata, specifically "Label"}
+\item{df_respinfo}{dataframe containing response metadata}
 
-\item{df_stressinfo}{dataframe containing stressor metadata, specifically "Label"}
+\item{df_stressinfo}{dataframe containing stressor metadata filtered to stressors that passed the co-occurrence screening}
 
-\item{df_paired}{x}
+\item{df_paired}{paired stressor-response data used only to generate scores table}
 
 \item{plotdpi}{Standardized dpi value for graphics. Default = plot_dpi. 600}
 
@@ -49,15 +49,14 @@ index and metric values, regardless of matching status}
 
 \item{plotunits}{Standardized units for graphics. Default = plot_units. "in"}
 
-\item{dir_results}{Directory containing all results. Default = file.path(getwd(),"Results").
-NOTE: the code adds a middle directory, BioComm, between the Results and the subdirectory.}
+\item{dir_results}{Directory containing results}
 
-\item{dir_sub}{Subdirectory for outputs from this function. Default = "TimeSequence"}
+\item{dir_sub}{Subdirectory for weight of evidence outputs. Default = "_WoE"}
 
-\item{boo_plot}{Flag declaring whether the plots should be saved or not. Default = TRUE.}
+\item{boo_plot}{Boolean to save plots. Default = TRUE.}
 }
 \value{
-One or more pngs in SiteID/Biocomm/TemporalSequence subfolder of the
+One or more pngs in SiteID/Biocomm/Stressor subfolder of the
        "Results" folder. No scores are currently generated.
 }
 \description{
@@ -66,11 +65,8 @@ Graph time-specific stressor-response values.
 \details{
 Generates faceted time sequence graphics (stressor/response, one
 atop the other). All stressor/response data are graphed.
-Improvements: Add scoring.
+Entries for the line of evidence table only apply to paired data.
 
 Uses the packages dplyr, ggplot2, lubridate, tidyr
-}
-\examples{
-# None at this time
 }
 \keyword{internal}

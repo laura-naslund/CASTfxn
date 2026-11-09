@@ -2,7 +2,7 @@
 % Please edit documentation in R/getWSStressData.R
 \name{getWSStressData}
 \alias{getWSStressData}
-\title{Retrieve watershed stressor data}
+\title{Get watershed stressor data}
 \usage{
 getWSStressData(
   boo_ws = NULL,
@@ -13,6 +13,23 @@ getWSStressData(
   config = NULL
 )
 }
+\arguments{
+\item{boo_ws}{boolean directing CASTool to run the watershed stressor analysis}
+
+\item{boo_helper}{boolean directing CASTool to download data from the CASTool helper package}
+
+\item{out_dir}{directory where data outputs are written}
+
+\item{dn_checked_sk}{name of checked data directory}
+
+\item{region}{analysis region name}
+
+\item{config}{list containing the configuration parameters}
+}
+\value{
+A list with watershed stressor data and metadata.
+If the user elects to not run the watershed stressor module, the function return list with data and metadata set to NULL.
+}
 \description{
-Retrieve watershed stressor data
+Get watershed stressor data
 }

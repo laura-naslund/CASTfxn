@@ -162,7 +162,7 @@ getQualSites <- function(TargetSiteID,
 
   dirSiteInfo <- file.path(dir_results, TargetSiteID, dir_sub)
   fnQualStats <- paste0(TargetSiteID, "_", toupper(biocomm), "_SiteQualities.csv")
-  write.csv(df_qualstats, file.path(dirSiteInfo, fnQualStats),
+  utils::write.csv(df_qualstats, file.path(dirSiteInfo, fnQualStats),
               row.names = FALSE)
 
   numcompsfinal <- as.numeric(df_qualstats[1, "InsideCaseSamples"])

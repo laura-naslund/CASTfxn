@@ -2,7 +2,7 @@
 % Please edit documentation in R/stressorElimination.R
 \name{reportNoSiteStressResponse}
 \alias{reportNoSiteStressResponse}
-\title{Report on no stressor response data for a particular site}
+\title{Report on no stressor response data for a particular site and biological community}
 \usage{
 reportNoSiteStressResponse(
   TargetSiteID,
@@ -12,6 +12,20 @@ reportNoSiteStressResponse(
   bioComm
 )
 }
+\arguments{
+\item{TargetSiteID}{target site identifier}
+
+\item{avail_list}{output from the function getAvailableDataTypes}
+
+\item{data_bioCoOccur}{paired stressor-response data for the biological community currently analyzed}
+
+\item{lagdays}{lag days for stressor-response pairing in the metadata}
+
+\item{bioComm}{biological community currently analyzed}
+}
+\value{
+gap statement if no paired target site stressor-response data for the current biological community
+}
 \description{
-Report on no stressor response data for a particular site
+Report on no stressor response data for a particular site and biological community
 }

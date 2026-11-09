@@ -2,7 +2,7 @@
 % Please edit documentation in R/combineStressData.R
 \name{combineStressData}
 \alias{combineStressData}
-\title{Combine stressor data}
+\title{Combine stress data}
 \usage{
 combineStressData(
   boo_ts = NULL,
@@ -12,6 +12,20 @@ combineStressData(
   und_stress
 )
 }
+\arguments{
+\item{boo_ts}{boolean indicating the presence of timestamped stressor data}
+
+\item{boo_und}{boolean indicating the presence of undated stressor data}
+
+\item{boo_outliers}{boolean indicating whether to remove outliers}
+
+\item{ts_stress}{timestamped stressor data}
+
+\item{und_stress}{undated stressor data}
+}
+\value{
+A list with combined stressor data (data_stress), metadata (data_stressInfo), and outliers table (data_stressOutliers)
+}
 \description{
-Combine stressor data
+Combine stress data
 }

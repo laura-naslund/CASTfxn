@@ -20,48 +20,37 @@ getWoE(
 )
 }
 \arguments{
-\item{TargetSiteID}{Site ID}
+\item{TargetSiteID}{target side identifier}
 
-\item{biocomm}{Biological community; algae or BMI.  Default = "BMI".}
+\item{biocomm}{current biological community}
 
-\item{dfLoE}{Dataframe containing the lines of evidence scores for each
-stressor and sample in long form.}
+\item{dfLoE}{dataframe containing the lines of evidence scores}
 
-\item{dfStress}{x}
+\item{dfStress}{metadata for stressors passing the co-occurrence screen}
 
-\item{dir_results}{Directory to save tables. Default = working directory and Results.}
+\item{dir_results}{directory to save results}
 
-\item{dir_WoE}{x}
+\item{dir_WoE}{subdirectory for weight of evidence outputs}
 
-\item{plotdpi}{x}
+\item{plotdpi}{plot resolution}
 
-\item{plotH}{x}
+\item{plotH}{plot height}
 
-\item{plotW}{x}
+\item{plotW}{plot width}
 
-\item{plotunits}{x}
+\item{plotunits}{plot units}
 
-\item{boo_plot}{x}
+\item{boo_plot}{boolean for generating plots}
 }
 \value{
-Two tab-delimited tables containing weight of evidence information:
-        one detailed, and one summary. The detailed table includes stressors
-        and the lines of evidence for or against them. The summary table
-        includes the number of lines that support, refute, are equivalent,
-        or were not evaluated.
+No returns. Writes a weight of evidence table with scores for each line of evidence
+and a summary weight of evidence table which counts the number of lines of evidence
+supporting, refuting, indeterminate and not evaluated for each target site
+stressor-response pair. Also writes a bar chart depicting the summary weight of evidence table.
 }
 \description{
-Summarize weight of evidence using scores from other functions.
-}
-\details{
-Stressor-based weight of evidence for the stressor as a cause of impairment
-         for the specified biological community. Combines information from
-         the co-occurrence, stressor-response using data from or outside the
-         case, verified predictions, and stressor-response from laboratory data.
+Summarize weight of evidence scores
 
 Uses the packages dplyr and tidyr.
-}
-\examples{
-# None at this time
 }
 \keyword{internal}

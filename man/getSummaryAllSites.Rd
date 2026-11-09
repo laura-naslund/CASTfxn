@@ -55,6 +55,6 @@ index score, stressor name, stressor value, and overall weight of evidence.
 Uses the libraries dplyr, tidyr, ggplot2, and ggthemes.
 }
 \examples{
-# None at this time 
+# None at this time
 }
 \keyword{internal}
