@@ -22,7 +22,7 @@
 #' @param plotH standardized plot height. Default = 6
 #' @param plotW standardized plot width. Default = 8
 #' @param plotunits units for plot height and width. Default = "in"
-#' @param dir_plots default = file.path(getwd(), "Results")
+#' @param dir_plots results directory
 #' @param dir_sub name of directory to write scores to. Default = "_WoE"
 #' @param boo_plot = TRUE
 #' @param incaseLabel label designating a site inside the case
@@ -672,7 +672,7 @@ getVPSSI <- function(TargetSiteID,
 
         # Write graphics directory ----
         out.dir <- dirname(dir_plots)
-        out.folders <- c(out.dir, basename(dir_plots), TargetSiteID, biocomm, str)
+        out.folders <- c(out.dir, basename(dir_plots), TargetSiteID, biocomm, dir_sub2)
 
         for (i in 1:length(out.folders)) {
           if (i == 1) {
@@ -694,6 +694,8 @@ getVPSSI <- function(TargetSiteID,
       } #End loop over stressors
 
     } ##FOR.SSI END
+
+    dir.path <- file.path(out.dir, basename(dir_plots), TargetSiteID, biocomm, dir_sub)
 
     if (exists("df.scores.log")) {
       fn.scores.log <- paste(TargetSiteID, biocomm, "VPSSILog", "Scores.csv", sep = "_")

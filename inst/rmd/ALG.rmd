@@ -56,7 +56,7 @@ based on the cutoff value for the corresponding biological community index.
   if (file.exists(fn_comps) == TRUE) {
     
     dfcomps <- read.csv(fn_comps, header = TRUE)
-    dfcomps <- dplyr::select(dfcomps, -BioComm) %>%
+    dfcomps <- dplyr::select(dfcomps, -BioComm) |>
       dplyr::rename(`Inside-the-case samples` = InsideCaseSamples,
                     `Outside-the-case samples` = OutsideCaseSamples,
                     `Reference samples` = ReferenceSamples,
@@ -92,8 +92,8 @@ based on the cutoff value for the corresponding biological community index.
 
   bullet <- "\U2022"
 
-  # siteDetects <- data_stressInfo %>%
-  #   dplyr::filter(StdParamName %in% siteDetectsAll) %>%
+  # siteDetects <- data_stressInfo |>
+  #   dplyr::filter(StdParamName %in% siteDetectsAll) |>
   #   dplyr::select(Label)
   # siteDetects <- unlist(siteDetects)
 
@@ -202,7 +202,7 @@ siteDetects <- setdiff(initial_stressors, stressors_elim_any)
 <!-- #   if (file.exists(fnNE)) { -->
 <!-- #     notEvaluated <- read.csv(fnNE, header = TRUE) -->
 <!-- #     NE <- merge(notEvaluated, data_stressInfo, by.x = "ALG_NotEvaluated",  -->
-<!-- #                 by.y = "StdParamName", all.x = TRUE) %>% -->
+<!-- #                 by.y = "StdParamName", all.x = TRUE) |> -->
 <!-- #       dplyr::select(Label) -->
 <!-- #     NE <- unlist(NE) -->
 <!-- #  -->
@@ -260,16 +260,19 @@ A note of caution:
       dfLoEbyStressor$VP_SSIlog <- NA
     }
     
-    dfLoEbyStressor <- dfLoEbyStressor %>%
-      #dplyr::mutate(Blank1 = NA) %>%
-      dplyr::rename(BioGradIn = Gradient..inside., 
-                    BioGradOut = Gradient..outside.) %>%
-      dplyr::select(Stressor, RespSampleID, RespSampleDate, CO, Suff, 
-                    BioGradIn, TS, VP_SSTV, VP_SSIbox, VP_SSIlog,
-                    BioGradOut) %>%
+    dfLoEbyStressor <- dfLoEbyStressor |>
+      #dplyr::mutate(Blank1 = NA) |>
+      # dplyr::rename(BioGradIn = Gradient..inside., 
+      #               BioGradOut = Gradient..outside.) |>
+      # dplyr::select(Stressor, RespSampleID, RespSampleDate, CO, Suff, 
+      #               BioGradIn, TS, VP_SSTV, VP_SSIbox, VP_SSIlog,
+      #               BioGradOut) |>
+            dplyr::select(Stressor, RespSampleID, RespSampleDate, CO, Suff, 
+                    SRLin_Score_inside, TS, VP_SSTV, VP_SSIbox, VP_SSIlog, 
+                    SRLin_Score_outside) |>
            # dplyr::select(Stressor, RespSampleID, RespSampleDate, CO, Suff, 
            #          BioGradIn, TS, VP_SSTV, VP_SSIbox, VP_SSIlog, Blank1, 
-           #          BioGradOut) %>%
+           #          BioGradOut) |>
       dplyr::arrange(Stressor, RespSampleDate)
     
     if (report_format == "html") {
@@ -336,8 +339,8 @@ A note of caution:
       #                                                # list(className = 'dt-center',
       #                                                #      targets = 3:12),
       #                                                list(className = 'dt-bottom',
-      #                                                     targets = "_all")))) %>%
-      #   DT::formatStyle(columns = colnames(dfLoEbyStressor), fontSize = '80%') %>%
+      #                                                     targets = "_all")))) |>
+      #   DT::formatStyle(columns = colnames(dfLoEbyStressor), fontSize = '80%') |>
       #   DT::formatStyle("RespSampleID", "white-space" = "nowrap")
       
      sketch <- htmltools::withTags(table(class = 'display', thead(
@@ -398,8 +401,8 @@ A note of caution:
                                                      # list(className = 'dt-center',
                                                      #      targets = 3:12),
                                                      list(className = 'dt-bottom',
-                                                          targets = "_all")))) %>%
-        DT::formatStyle(columns = colnames(dfLoEbyStressor), fontSize = '80%') %>%
+                                                          targets = "_all")))) |>
+        DT::formatStyle(columns = colnames(dfLoEbyStressor), fontSize = '80%') |>
         DT::formatStyle(columns = colnames(dfLoEbyStressor), `text-align` = "left") |> 
         DT::formatStyle("RespSampleID", "white-space" = "nowrap")
       
@@ -442,9 +445,9 @@ This table provides an indication of the consistency of the evidence for a candi
       dfLoEbyStressor$VP_SSIlog <- NA
     }
    
-   dfLoESummary <- dfLoESummary %>%
+   dfLoESummary <- dfLoESummary |>
      dplyr::select(Stressor, RespSampleID, RespSampleDate, NumSupport,
-                   NumRefute, NumIndeterminate, NumNotEvaluated) %>%
+                   NumRefute, NumIndeterminate, NumNotEvaluated) |>
      dplyr::arrange(Stressor, RespSampleDate)
 
    if (report_format == "html") {
@@ -501,8 +504,8 @@ This table provides an indication of the consistency of the evidence for a candi
                                                     # list(className = 'dt-center',
                                                     #      targets = 3:12),
                                                     list(className = 'dt-bottom',
-                                                         targets = "_all")))) %>%
-       DT::formatStyle(columns = colnames(dfLoESummary), fontSize = '80%') %>%
+                                                         targets = "_all")))) |>
+       DT::formatStyle(columns = colnames(dfLoESummary), fontSize = '80%') |>
        DT::formatStyle("RespSampleID", "white-space" = "nowrap")
 
    } else {
@@ -535,8 +538,8 @@ are displayed below. Figures for other indices are available in the downloadable
 #stressors <- setdiff(siteDetects, NE)
 stressors <- siteDetects
 #paramName <- data_stressInfo$StdParamName[data_stressInfo$Label %in% stressors]
-df.SSINames <- data_stressInfo[data_stressInfo$Label %in% stressors, ] %>%
-  dplyr::filter(!is.na(SSIndex)) %>%
+df.SSINames <- data_stressInfo[data_stressInfo$Label %in% stressors, ] |>
+  dplyr::filter(!is.na(SSIndex)) |>
   dplyr::select(StdParamName, SSIndex)
 
 dir.biocomm <- file.path(dir_results, TargetSiteID, "ALG")
