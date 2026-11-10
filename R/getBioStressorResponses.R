@@ -106,7 +106,7 @@ getBioStressorResponses <- function(TargetSiteID,
   # Write results directory ----
   out.folders <- c(dir_plots, TargetSiteID, biocomm, dir_sub)
 
-  for (i in 1:length(out.folders)) {
+  for (i in seq_along(out.folders)) {
     if (i == 1) {
       dir_path <- file.path(out.folders[i])
     } else {
@@ -202,18 +202,18 @@ getBioStressorResponses <- function(TargetSiteID,
       # Subset dataframes to current stressor and response
       df_SiteData_sr <- df_SiteData |>
         dplyr::select(RespSampleID, dplyr::all_of(respName), dplyr::all_of(stressName)) |>
-        dplyr::rename(Response = respName, Stressor = stressName) |>
+        dplyr::rename(Response = dplyr::all_of(respName), Stressor = dplyr::all_of(stressName)) |>
         dplyr::mutate(Case = "Target sample(s)") |>
         tidyr::drop_na()
 
       df_CompData_sr <- df_CompData |>
         dplyr::select(dplyr::all_of(respName), dplyr::all_of(stressName), Quality) |>
-        dplyr::rename(Response = respName, Stressor = stressName) |>
+        dplyr::rename(Response = dplyr::all_of(respName), Stressor = dplyr::all_of(stressName)) |>
         tidyr::drop_na()
 
       df_NotCompData_sr <- df_NotCompData |>
         dplyr::select(dplyr::all_of(respName), dplyr::all_of(stressName), Quality) |>
-        dplyr::rename(Response = respName, Stressor = stressName) |>
+        dplyr::rename(Response = dplyr::all_of(respName), Stressor = dplyr::all_of(stressName)) |>
         tidyr::drop_na()
 
       # Write sample number data gaps

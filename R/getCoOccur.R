@@ -99,7 +99,7 @@ getCoOccur <- function(TargetSiteID,
   out.dir <- dirname(dir_plots)
   out.folders <- c(out.dir, basename(dir_plots), TargetSiteID, biocomm, dir_sub)
 
-  for (i in 1:length(out.folders)) {
+  for (i in seq_along(out.folders)) {
     if (i == 1) {
       dir_path <- file.path(out.folders[i])
     } else {
@@ -169,6 +169,7 @@ getCoOccur <- function(TargetSiteID,
   df.scores <- df_data |>
     dplyr::filter(StationID == TargetSiteID) |>
     tidyr::pivot_longer(cols = dplyr::all_of(detects), names_to = "Stressor", values_to = "StressorValue") |>
+    dplyr::filter(is.na(StressorValue) == FALSE) |>
     dplyr::left_join(df.stats, by = "Stressor") |>
     dplyr::mutate(Sc_Box = dplyr::case_when(
       (Stressor == "pH_low" & StressorValue < pHlimLow) ~ 1,
@@ -176,7 +177,7 @@ getCoOccur <- function(TargetSiteID,
       (stringr::str_detect(Stressor |> tolower() |> gsub("\\s", "", x = _), "^do$|dissolvedoxygen") & StressorValue < DOlim) ~ 1,
       (DirIncStress == "Dec") ~ dplyr::case_when(StressorValue > q50 ~ -1,
                                                  StressorValue < q25 ~ 1,
-                                                 TRUE ~0),
+                                                 TRUE ~ 0),
       (DirIncStress == "Inc") ~ dplyr::case_when(StressorValue > q75 ~ 1,
                                                  StressorValue < q50 ~ -1,
                                                  TRUE ~ 0)),
@@ -217,7 +218,7 @@ getCoOccur <- function(TargetSiteID,
 
     df.comp.stress <- df.comp |>
       dplyr::select(dplyr::all_of(stressname), Quality) |>
-      dplyr::rename(Stressor = stressname) |>
+      dplyr::rename(Stressor = dplyr::all_of(stressname)) |>
       tidyr::drop_na()
 
     df.stats.stress <- df.stats |>
@@ -254,6 +255,12 @@ getCoOccur <- function(TargetSiteID,
     # scoring lines
     maxVal <- df.stats.stress |> dplyr::pull(maxVal)
     minVal <- df.stats.stress |> dplyr::pull(minVal)
+
+    maxTarg <- df.scores.stress |> dplyr::summarize(maxVal = max(StressorValue)) |> dplyr::pull(maxVal)
+    minTarg <- df.scores.stress |> dplyr::summarize(minVal = min(StressorValue)) |> dplyr::pull(minVal)
+
+    maxVal <- max(maxVal, maxTarg)
+    minVal <- min(minVal, minTarg)
 
     if (df.stats.stress$DirIncStress == "Dec") {
       box_qHI <- df.stats.stress |> dplyr::pull(q50)
