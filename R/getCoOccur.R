@@ -339,13 +339,13 @@ getCoOccur <- function(TargetSiteID,
   if (length(notstressors) > 0) {
     for (s in seq_along(notstressors)) {
       msg <- paste0(notstressors[s], " identified as not a candidate cause for ",
-                    TargetSiteID," for the ", bioComm, " community.")
+                    TargetSiteID," for the ", biocomm, " community.")
       message(msg)
 
       # No identified stressors may be a data gap, but may not be, either
       gap.statement <- data.frame(
         fxnname = "getCoOccur",
-        condition = paste0(notstressors[s], " score for ", bioComm,
+        condition = paste0(notstressors[s], " score for ", biocomm,
                            " refutes"),
         result = as.character(-1),
         comment = msg)
