@@ -10,8 +10,7 @@ README-CASTfxn
 
 ## CASTfxn
 
-Suite of functions for the Causal Assessment Screening Tool (CAST).
-Includes Shiny app.
+Suite of functions for the Causal Assessment Screening Tool (CASTool).
 
 ## Badges
 
@@ -41,13 +40,9 @@ releases](https://img.shields.io/github/downloads/leppott/CASTfxn/total.svg)](ht
 Requires the use of `remotes` (or another package) to install from
 GitHub.
 
-Vignettes are also not installed by default. The additional parameters
-in install_github are used to ensure the install happens if there is an
-existing install and to install the vignettes.
-
 ``` r
 if(!require(remotes)){install.packages("remotes")}  #install if needed
-install_github("leppott/CASTfxn", force=TRUE, build_vignettes = TRUE)
+install_github("laura-naslund/CASTfxn", force=TRUE, build_vignettes = TRUE)
 ```
 
 If using R v3.6 then need an extra line to allow devtools to work
@@ -102,10 +97,6 @@ repository; <https://github.com/leppott/CAST_Shiny>
 Vignette and install guide are planned for the future.
 
 ## Help
-
-Functions in the package have a help file with extra documentation.
-There is also a vignette with descriptions and examples of all functions
-in the `CASTfxn` library.
 
 ``` r
 # To get help on a function
