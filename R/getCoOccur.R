@@ -196,7 +196,7 @@ getCoOccur <- function(TargetSiteID,
     out.dir <- dirname(dir_plots)
     out.folders <- c(out.dir, basename(dir_plots), TargetSiteID, biocomm, stressname)
 
-    for (i in 1:length(out.folders)) {
+    for (i in seq_along(out.folders)) {
       if (i == 1) {
         dir_path_stress <- file.path(out.folders[i])
       } else {
@@ -290,7 +290,9 @@ getCoOccur <- function(TargetSiteID,
       ggplot2::scale_linetype_manual(name = "", values = targ_line_lty)+
       ggplot2::geom_jitter(ggplot2::aes(color = Quality, shape = Quality,
                                         fill = Quality), alpha = 0.5,
-                           na.rm = TRUE, width = 0.25, height = 0.01) +
+                           na.rm = TRUE, width = 0.25,
+                           height = 0 # this was throwing off the x orientation of points
+                           ) +
       ggplot2::annotate("segment", y = minVal, yend = box_qLO, x = c(1.5, 1.5),
                         color = "orange", linewidth = 0.7, alpha = 0.6,
                         arrow = grid::arrow(ends = "both", type = "open",

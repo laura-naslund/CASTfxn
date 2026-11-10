@@ -625,7 +625,7 @@ getVPSSI <- function(TargetSiteID,
         ggplot2::scale_linetype_manual(name = "", values = targ_line_lty)+
         ggplot2::geom_jitter(ggplot2::aes(color = "black", shape = Quality,
                                           fill = Quality), alpha = 0.5,
-                             na.rm = TRUE, width = 0.25, height = 0.01) +
+                             na.rm = TRUE, width = 0.25, height = 0) +
         ggplot2::annotate("segment", y = minVal, yend = box_qLO, x = c(xseg, xseg),
                           color = "orange", linewidth = 0.7, alpha = 0.6,
                           arrow = grid::arrow(ends = "both", type = "open",

@@ -215,7 +215,7 @@ checkInputs <- function(dir_uploaded,
     dplyr::pull(StationID)
 
   stressor_metadata <- loaded |>
-    dplyr::filter(FilePath %in% c("fn.meas.info", "fn.model.info"))
+    dplyr::filter(FilePath %in% c("fn.timestamped.info", "fn.undated.info"))
 
   stressors_df <- data.frame(stressor = character())
   for(i in seq_len(nrow(stressor_metadata))){
@@ -244,7 +244,6 @@ checkInputs <- function(dir_uploaded,
     responses_df <- responses_df |>
       dplyr::bind_rows(temp_responses)
   }
-
 
   prob_fp_df <- dplyr::cross_join(responses_df, stressors_df) |>
     dplyr::mutate(dir_out = dir_out,
