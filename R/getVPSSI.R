@@ -80,7 +80,7 @@ getVPSSI <- function(TargetSiteID,
   }
 
   # define pipe; standardize biocomm
-  biocomm <- toupper(biocomm)
+  biocomm_upper <- toupper(biocomm)
 
   # Initialize gap df
   df_gap <- data.frame(fxnname = character(), condition = character(), result = character(), comment = character())
@@ -285,7 +285,7 @@ getVPSSI <- function(TargetSiteID,
     for(k in seq_along(current_stressors)){
       stress <- current_stressors[k]
       slab <- info.stress.ssi |> dplyr::filter(Stressor == stress) |> dplyr::pull(Label)
-      dir_path_stress <- file.path(dirname(dir_plots), basename(dir_plots), TargetSiteID, biocomm, stress)
+      dir_path_stress <- file.path(dirname(dir_plots), basename(dir_plots), TargetSiteID, biocomm_upper, stress)
 
       # Sufficiency LoE
       if(is.na(current.box.scores$CutoffValue[1]) == FALSE){
@@ -330,7 +330,7 @@ getVPSSI <- function(TargetSiteID,
           dplyr::select(-y.name)
 
         # define filename for logistic regression plot
-        fn_png_p2 <- paste0(TargetSiteID, stress, "_", biocomm, "_", current_ssi,
+        fn_png_p2 <- paste0(TargetSiteID, stress, "_", biocomm_upper, "_", current_ssi,
                             "_VIreg.png")
 
         # Identify plot vars for logistic plots
@@ -422,7 +422,7 @@ getVPSSI <- function(TargetSiteID,
         df.log.scores <- dplyr::bind_rows(df.log.scores, current.log.scores)
       } # sufficiency if
 
-      fn_png_p1 <- paste0(TargetSiteID, "_", stress, "_", biocomm, "_", current_ssi,
+      fn_png_p1 <- paste0(TargetSiteID, "_", stress, "_", biocomm_upper, "_", current_ssi,
                           "_VIbox.png")
 
       ggplot2::ggsave(filename = file.path(dir_path_stress, fn_png_p1),
@@ -434,10 +434,12 @@ getVPSSI <- function(TargetSiteID,
     df.box.scores <- dplyr::bind_rows(df.box.scores, current.box.scores)
   } # Seq along ssi
 
-  dir.path <- file.path(dirname(dir_plots), basename(dir_plots), TargetSiteID, biocomm, dir_sub)
+  dir.path <- file.path(dirname(dir_plots), basename(dir_plots), TargetSiteID, biocomm_upper, dir_sub)
 
   df.box.scores_ret <- df.box.scores |>
-    dplyr::rename(bioIndexName = SSIndex, Label = MetricLabel,
+    dplyr::left_join(info.stress.ssi |> dplyr::select(Stressor, Label), by = "Stressor") |>
+    dplyr::select(-Stressor) |>
+    dplyr::rename(Stressor = Label, bioIndexName = SSIndex, Label = MetricLabel,
                   bioIndex = SSIValue, Score = Sc_Box) |>
     dplyr::mutate(LoE = "VP_SSIbox", Quality = NA) |>
     dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
@@ -445,18 +447,20 @@ getVPSSI <- function(TargetSiteID,
                   Stressor, StressorValue, LoE, Score)
 
 
-  fn.scores.box <- paste(TargetSiteID, biocomm, "VPSSIBox", "Scores.csv", sep = "_")
+  fn.scores.box <- paste(TargetSiteID, biocomm_upper, "VPSSIBox", "Scores.csv", sep = "_")
   utils::write.csv(df.box.scores, file.path(dir.path, fn.scores.box), row.names = FALSE)
 
   df.log.scores.ret <- data.frame()
   if (nrow(df.log.scores) > 0) {
-    fn.scores.log <- paste(TargetSiteID, biocomm, "VPSSILog", "Scores.csv", sep = "_")
+    fn.scores.log <- paste(TargetSiteID, biocomm_upper, "VPSSILog", "Scores.csv", sep = "_")
     utils::write.csv(df.log.scores, file.path(dir.path, fn.scores.log), row.names = FALSE)
 
     df.log.scores.ret <- df.log.scores |>
+      dplyr::left_join(info.stress.ssi |> dplyr::select(Stressor, Label), by = "Stressor") |>
+      dplyr::select(-Stressor) |>
       dplyr::rename(Score = Sc_VPlog,
                     bioIndex = SSIValue, bioIndexName = SSIndex,
-                    Quality = SSIQuality) |>
+                    Quality = SSIQuality, Stressor = Label) |>
       dplyr::mutate(LoE = "VP_SSIlog", bioComm = biocomm) |>
       dplyr::select(StationID, StressSampleID, StressSampleDate, RespSampleID,
                     RespSampleDate, bioComm, bioIndexName, bioIndex, Quality,
