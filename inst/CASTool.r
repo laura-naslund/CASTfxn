@@ -24,7 +24,7 @@ tic <- Sys.time()
 # 01, Set up ####
 ## Define global variables ####
 cfg <- setGlobals(
-  boo_shiny = TRUE, # Whether to run the code in Shiny mode (set to FALSE if running script outside of the app)
+  boo_shiny = FALSE, # Whether to run the code in Shiny mode (set to FALSE if running script outside of the app)
   boo_debug = FALSE # Whether to run the code in debug mode
 )
 
@@ -33,11 +33,14 @@ if(cfg$boo_shiny == FALSE) {
 
   cfg <- setUpRConsole(
       # File path of data directory
-      in_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/8-nars-test-data/Data",
+      #in_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/8-nars-test-data/Data",
+      in_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/6-state-test-data/WA_CASTool_TestData_20260407",
       # File path of results directory
-      out_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/8-nars-test-data/Results",
+      #out_dir = "C:/Users/lnaslund/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/3-projects/10-castool/8-nars-test-data/Results",
+      out_dir = "C:/Users/lnaslund/WA_Results",
       # Region name
-      region = "Rhode Island"
+      #region = "Rhode Island"
+      region = "Washington"
     ) |>
     append(cfg, values = _)
 
@@ -707,12 +710,11 @@ for (site in seq_len(nrow(df_targets))) {
       } else{
         list.VPSSIscores <- getVPSSI(TargetSiteID     = TargetSiteID,
                                      stressors.ssi    = stressors.ssi,
-                                     df_stressinfo    = list.StressorMetaData$df_stressorMetadata,
+                                     info.stress.ssi  = info.stress.ssi,
+                                     info.ssi         = info.ssi,
                                      df_paired        = df_PairedStressResp,
                                      biocomm          = bioComm,
                                      df_bioMetricData = currentDataList$data_bioMetrics,
-                                     df_bioMetricInfo = currentDataList$data_bioMetricsInfo,
-                                     colBio           = bioIndexGp,
                                      config           = cfg,
                                      dir_plots        = dir_results,
                                      dir_sub          = "_WoE",

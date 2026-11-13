@@ -7,19 +7,18 @@
 getVPSSI(
   TargetSiteID,
   stressors.ssi,
-  df_stressinfo,
+  info.stress.ssi,
+  info.ssi,
   df_paired,
   biocomm,
   df_bioMetricData,
-  df_bioMetricInfo,
   config = cfg,
-  colBio,
   plotvars,
   plotdpi = 600,
   plotH = 6,
   plotW = 8,
   plotunits = "in",
-  dir_plots = file.path(getwd(), "Results"),
+  dir_plots,
   dir_sub = "_WoE",
   boo_plot = TRUE,
   incaseLabel,
@@ -31,7 +30,9 @@ getVPSSI(
 
 \item{stressors.ssi}{vector of stressors identified as candidate causes with SSIs}
 
-\item{df_stressinfo}{dataframe of stressor metadata}
+\item{info.stress.ssi}{stressor metadata filtered to those with SSIs}
+
+\item{info.ssi}{metrics metadata filtered to SSIs}
 
 \item{df_paired}{paired stressor biological response data}
 
@@ -39,11 +40,7 @@ getVPSSI(
 
 \item{df_bioMetricData}{metric data for the current biological community}
 
-\item{df_bioMetricInfo}{metric metadata for the current biological community}
-
 \item{config}{list of configuration parameters}
-
-\item{colBio}{index for the current biological community}
 
 \item{plotvars}{plotting parameters}
 
@@ -55,7 +52,7 @@ getVPSSI(
 
 \item{plotunits}{units for plot height and width. Default = "in"}
 
-\item{dir_plots}{default = file.path(getwd(), "Results")}
+\item{dir_plots}{results directory}
 
 \item{dir_sub}{name of directory to write scores to. Default = "_WoE"}
 
