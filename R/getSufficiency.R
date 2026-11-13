@@ -230,7 +230,7 @@ getSufficiency <- function(TargetSiteID,
                                         ifelse(j_SR_score == "-1", "-1 (Refuting)", "NA")))
 
         # Plot
-        fn_png_p1 <- paste(TargetSiteID, str, resp, biocomm, "SU.png", sep = "_")
+        fn_png_p1 <- paste(TargetSiteID, str, biocomm, resp, "SU.png", sep = "_")
 
         captionSR <- paste(paste0("All inside-the-case samples (n=", n_cc_df_plot, ")."),
                            paste0("Score = ", paste(j_SR_score_txt, collapse = ", "), "."),
