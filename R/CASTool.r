@@ -436,6 +436,17 @@ for (site in seq_len(nrow(df_targets))) {
       next
     }
 
+    ## Discard elimination list element from previous bioComm loop iteration
+    list.StressorElim <- purrr::discard_at(list.StressorElim, c("msg_no_site_sr",
+                                                                "gap_no_site_sr",
+                                                                "targMeasStress",
+                                                                "df_notMeasElim",
+                                                                "insuffSamples",
+                                                                "df_suffElim",
+                                                                "stressorMeasSuff",
+                                                                "coOccurElim"))
+
+
     df_LoE <- data.frame(StationID        = character(),
                          StressSampleID   = character(),
                          StressSampleDate = as.Date(character()),

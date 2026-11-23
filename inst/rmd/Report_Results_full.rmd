@@ -172,24 +172,32 @@ TScluster <- ifelse(useBC == TRUE,
 
 row.names(dfSamps) <- NULL
 
+# This should be replaced
 camelCaseToTitleCase <- function(camelCaseString) {
   # Insert spaces before uppercase letters (except the first character)
   tempString <- gsub("([A-Z])", " \\1", camelCaseString)
   
+  # Join "I D" to recreate "ID"
+  titleCaseString <- sub("(I D)", "ID", tempString)
+  
+  # Join "B M I" to recreate "BMI"
+  titleCaseString <- sub("(B M I)", "BMI", titleCaseString)
+  
+  # Join "A L G" to recreate "ALG"
+  titleCaseString <- sub("(A L G)", "ALG", titleCaseString)
+  
+  # Join "F I S H" to recreate "FISH"
+  titleCaseString <- sub("(F I S H)", "FISH", titleCaseString)
+  
   # Capitalize the first letter of each word and convert the rest to lowercase
   # This handles the case where the original string starts with an uppercase
   # letter and ensures subsequent words are correctly capitalized.
-  titleCaseString <- tools::toTitleCase(tempString)
+  titleCaseString <- tools::toTitleCase(titleCaseString)
   
   # Remove any leading spaces that might have been introduced if the original
   # string started with an uppercase letter
   titleCaseString <- trimws(titleCaseString)
   
-  # Join "I D" to recreate "ID"
-  titleCaseString <- sub("(I D)", "ID", titleCaseString)
-  
-  # Join "B M I" to recreate "BMI"
-  titleCaseString <- sub("(B M I)", "BMI", titleCaseString)
   
   return(titleCaseString)
 }
@@ -213,19 +221,19 @@ if (nrow(dfSamps) > 0) {# Samples exist for target site
     dfSamps <- dfSamps[, c(2:(origcol), 1, (origcol + 1):ncol(dfSamps))]
   }
   if (!is.null(data_algMetrics)) {
-    origcol <- which(colnames(dfSamps) == "Alg Sample ID")
+    origcol <- which(colnames(dfSamps) == "ALG Sample ID")
     dfalg <- dplyr::filter(data_algMetrics, StationID == TargetSiteID) %>%
       dplyr::select(RespSampleID, all_of(algIndex), Quality)
-    dfSamps <- merge(dfSamps, dfalg, by.x = "Alg Sample ID", by.y = "RespSampleID",
+    dfSamps <- merge(dfSamps, dfalg, by.x = "ALG Sample ID", by.y = "RespSampleID",
                      all.x = TRUE)
     dfSamps <- dplyr::rename(dfSamps, `Algae Quality` = Quality)
     dfSamps <- dfSamps[, c(2:(origcol), 1, (origcol + 1):ncol(dfSamps))]
   }
   if (!is.null(data_fishMetrics)) {
-    origcol <- which(colnames(dfSamps) == "Fish Sample ID")
+    origcol <- which(colnames(dfSamps) == "FISH Sample ID")
     dffish <- dplyr::filter(data_fishMetrics, StationID == TargetSiteID) %>%
       dplyr::select(RespSampleID, all_of(fishIndex), Quality)
-    dfSamps <- merge(dfSamps, dffish, by.x = "Fish Sample ID", by.y = "RespSampleID",
+    dfSamps <- merge(dfSamps, dffish, by.x = "FISH Sample ID", by.y = "RespSampleID",
                      all.x = TRUE)
     dfSamps <- dplyr::rename(dfSamps, `Fish Quality` = Quality)
     dfSamps <- dfSamps[, c(2:(origcol), 1, (origcol + 1):ncol(dfSamps))]

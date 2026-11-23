@@ -63,7 +63,7 @@ getAvailableDataTypes <- function(TargetSiteID,
   samptypes <- names(avail.data)
 
   core.resp.colnames <- c("StationID", "COMID", "OutcaseCol", "IncaseCol",
-                          "SampleDate", "BMISampleID", "AlgSampleID", "FishSampleID")
+                          "SampleDate", "BMISampleID", "ALGSampleID", "FISHSampleID")
 
   availStressSamps <- setdiff(samptypes, core.resp.colnames)
   missingStressSamps <- setdiff(colnames(df_SampSummary), availStressSamps)
@@ -124,7 +124,7 @@ getAvailableDataTypes <- function(TargetSiteID,
       }
     }
     if (bio == "alg") {
-      if ("AlgSampleID" %in% samptypes) {
+      if ("ALGSampleID" %in% samptypes) {
         useAlg <- TRUE
       } else {   # Algal data are included, but this site does not have algal data
         useAlg <- FALSE
@@ -141,7 +141,7 @@ getAvailableDataTypes <- function(TargetSiteID,
       }
     }
     if (bio == "fish") {
-      if ("FishSampleID" %in% samptypes) {
+      if ("FISHSampleID" %in% samptypes) {
         useFish <- TRUE
       } else {   # Fish data are included, but this site does not have fish data
         useFish <- FALSE

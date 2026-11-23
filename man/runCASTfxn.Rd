@@ -4,7 +4,15 @@
 \alias{runCASTfxn}
 \title{Run the CASTool skeleton code}
 \usage{
-runCASTfxn(boo_shiny, boo_debug, in_dir, out_dir, region)
+runCASTfxn(
+  boo_shiny,
+  boo_debug,
+  in_dir,
+  out_dir,
+  region,
+  dn_checked_sk,
+  shiny_targ = input$si_checked_sites_targ
+)
 }
 \arguments{
 \item{boo_shiny}{boolean to run in Shiny mode}
